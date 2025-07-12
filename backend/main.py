@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from app.api.v1.router import api_router
 from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, publication
 from app.core.config import settings
@@ -44,21 +45,83 @@ frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fronte
 print(f"Frontend path: {frontend_path}")
 print(f"Frontend exists: {os.path.exists(frontend_path)}")
 if os.path.exists(frontend_path):
-    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-    print("Static files mounted successfully")
+    app.mount("/frontend", StaticFiles(directory=frontend_path), name="frontend_static")
+    print("Frontend static files mounted successfully")
 
 # Configurar archivos estáticos para imágenes subidas
 images_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
 os.makedirs(images_path, exist_ok=True)
 app.mount("/images", StaticFiles(directory=images_path), name="images")
 
-# Configurar archivos estáticos para el motor de publicación
-static_path = os.path.join(os.path.dirname(__file__), "app", "static")
-if os.path.exists(static_path):
-    app.mount("/static", StaticFiles(directory=static_path), name="publication_static")
-    print(f"Publication static files mounted from: {static_path}")
+# Configurar archivos estáticos para el motor de publicación (backend/static)
+backend_static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(backend_static_path):
+    app.mount("/static", StaticFiles(directory=backend_static_path), name="backend_static")
+    print(f"Backend static files mounted from: {backend_static_path}")
 else:
-    print(f"Publication static directory not found: {static_path}")
+    print(f"Backend static directory not found: {backend_static_path}")
+
+# Configurar archivos estáticos para el motor de publicación (app/static)
+app_static_path = os.path.join(os.path.dirname(__file__), "app", "static")
+if os.path.exists(app_static_path):
+    app.mount("/app-static", StaticFiles(directory=app_static_path), name="app_static")
+    print(f"App static files mounted from: {app_static_path}")
+else:
+    print(f"App static directory not found: {app_static_path}")
+
+# Configurar templates
+templates_path = os.path.join(os.path.dirname(__file__), "app", "templates")
+templates = Jinja2Templates(directory=templates_path)
+
+# Definir filtros personalizados para Jinja2
+def truncate_words(text, length=50):
+    """Truncar texto por número de palabras"""
+    if not text:
+        return ""
+    words = str(text).split()
+    if len(words) <= length:
+        return text
+    return ' '.join(words[:length]) + '...'
+
+def format_date(date, format='%d de %B, %Y'):
+    """Formatear fecha"""
+    if not date:
+        return ""
+    # Mapeo de meses en español
+    months = {
+        'January': 'enero', 'February': 'febrero', 'March': 'marzo',
+        'April': 'abril', 'May': 'mayo', 'June': 'junio',
+        'July': 'julio', 'August': 'agosto', 'September': 'septiembre',
+        'October': 'octubre', 'November': 'noviembre', 'December': 'diciembre'
+    }
+    
+    formatted = date.strftime(format)
+    for en_month, es_month in months.items():
+        formatted = formatted.replace(en_month, es_month)
+    return formatted
+
+def reading_time(text, wpm=200):
+    """Calcular tiempo de lectura estimado"""
+    if not text:
+        return "1"
+    word_count = len(str(text).split())
+    minutes = max(1, round(word_count / wpm))
+    return str(minutes)
+
+# Agregar función now() como global
+def now():
+    """Función para obtener la fecha actual"""
+    return datetime.now()
+
+# Registrar los filtros en el entorno Jinja2
+templates.env.filters['truncate_words'] = truncate_words
+templates.env.filters['format_date'] = format_date
+templates.env.filters['reading_time'] = reading_time
+
+# Registrar funciones globales
+templates.env.globals['now'] = now
+
+print(f"Templates configured from: {templates_path}")
 
 # Incluir rutas de la API
 app.include_router(api_router, prefix="/api/v1")
@@ -578,8 +641,11 @@ async def home_page():
     return html_content
 
 @app.get("/content/{slug}", response_class=HTMLResponse, response_model=None)
-async def get_public_content(slug: str, db: Session = Depends(get_db)) -> HTMLResponse:
-    """Servir contenido público por slug"""
+async def get_public_content(slug: str, request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    """Servir contenido público por slug usando el sistema de templates"""
+    from app.models.category import Category
+    from app.models.tag import Tag
+    
     # Buscar contenido por slug que esté publicado
     content_item = db.query(Content).filter(
         Content.slug == slug,
@@ -589,302 +655,34 @@ async def get_public_content(slug: str, db: Session = Depends(get_db)) -> HTMLRe
     if not content_item:
         raise HTTPException(status_code=404, detail="Contenido no encontrado")
     
-    # Formatear fecha para Schema.org
-    published_date = content_item.published_at or content_item.created_at
-    iso_date = published_date.strftime('%Y-%m-%d')
-    formatted_date = published_date.strftime('%d de %B de %Y')
+    # Obtener datos necesarios para el template
+    categories = db.query(Category).limit(10).all()
+    category = content_item.category
+    tags = content_item.tags
+    keyword = content_item.keyword
+    images = content_item.images
     
-    # Información del autor y publisher
-    author_name = content_item.user.username if content_item.user else "Autor"
-    publisher_name = "Consultas Esotéricas Latam"  # Configurable
+    # Obtener el tema del post o usar el tema del sitio
+    template_theme = content_item.template_theme or "default"
     
-    # Generar HTML para mostrar el contenido con Schema.org
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{content_item.meta_title or content_item.title}</title>
-        <meta name="description" content="{content_item.meta_description or content_item.excerpt or ''}">
-        <meta name="keywords" content="{content_item.keyword.keyword if content_item.keyword else ''}">
-        
-        <!-- Open Graph / Facebook -->
-        <meta property="og:type" content="article">
-        <meta property="og:url" content="{request.url if 'request' in locals() else ''}">
-        <meta property="og:title" content="{content_item.meta_title or content_item.title}">
-        <meta property="og:description" content="{content_item.meta_description or content_item.excerpt or ''}">
-        
-        <!-- Twitter -->
-        <meta property="twitter:card" content="summary_large_image">
-        <meta property="twitter:title" content="{content_item.meta_title or content_item.title}">
-        <meta property="twitter:description" content="{content_item.meta_description or content_item.excerpt or ''}">
-        
-        <!-- Schema.org JSON-LD -->
-        <script type="application/ld+json">
-        {{
-            "@context": "https://schema.org",
-            "@type": "{content_item.schema_type or 'Article'}",
-            "headline": "{content_item.title}",
-            "description": "{content_item.meta_description or content_item.excerpt or ''}",
-            "author": {{
-                "@type": "Person",
-                "name": "{content_item.author_name or author_name}"
-            }},
-            "publisher": {{
-                "@type": "Organization",
-                "name": "{content_item.publisher_name or publisher_name}"
-            }},
-            "datePublished": "{iso_date}",
-            "dateModified": "{content_item.updated_at.strftime('%Y-%m-%d') if content_item.updated_at else iso_date}",
-            "mainEntityOfPage": {{
-                "@type": "WebPage",
-                "@id": "{request.url if 'request' in locals() else ''}"
-            }},
-            "articleSection": "{content_item.article_section or (content_item.category.name if content_item.category else 'General')}",
-            "keywords": "{content_item.keyword.keyword if content_item.keyword else ''}",
-            "wordCount": {content_item.word_count or 0}
-        }}
-        </script>
-        
-        <style>
-            * {{
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }}
-            
-            body {{
-                font-family: 'Georgia', 'Times New Roman', serif;
-                line-height: 1.6;
-                color: #333;
-                background-color: #f8f9fa;
-                padding: 2rem 0;
-            }}
-            
-            .container {{
-                max-width: 800px;
-                margin: 0 auto;
-                background: white;
-                padding: 3rem;
-                border-radius: 10px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            }}
-            
-            article {{
-                background: white;
-                border-radius: 8px;
-                overflow: hidden;
-            }}
-            
-            header {{
-                text-align: center;
-                margin-bottom: 3rem;
-                border-bottom: 2px solid #eee;
-                padding-bottom: 2rem;
-            }}
-            
-            footer {{
-                margin-top: 3rem;
-                padding-top: 2rem;
-                border-top: 1px solid #eee;
-                text-align: center;
-                color: #666;
-                font-size: 0.9rem;
-            }}
-            
-            footer strong {{
-                color: #2c3e50;
-                font-weight: 600;
-            }}
-            
-            h1 {{
-                font-size: 2.5rem;
-                color: #2c3e50;
-                margin-bottom: 1rem;
-                font-weight: 700;
-            }}
-            
-            .meta {{
-                color: #666;
-                font-size: 0.9rem;
-                margin-bottom: 1rem;
-            }}
-            
-            .excerpt {{
-                font-size: 1.2rem;
-                color: #555;
-                font-style: italic;
-                margin-bottom: 2rem;
-            }}
-            
-            .content {{
-                 font-size: 1.1rem;
-                 line-height: 1.8;
-                 text-align: justify;
-             }}
-             
-             .content p {{
-                 margin-bottom: 1.5rem;
-             }}
-             
-             .content h2 {{
-                 font-size: 1.8rem;
-                 color: #2c3e50;
-                 margin-top: 2.5rem;
-                 margin-bottom: 1.5rem;
-                 font-weight: 600;
-                 border-bottom: 2px solid #ecf0f1;
-                 padding-bottom: 0.5rem;
-             }}
-             
-             .content h2:first-child {{
-                 margin-top: 0;
-             }}
-             
-             .content h3 {{
-                 font-size: 1.4rem;
-                 color: #34495e;
-                 margin-top: 2rem;
-                 margin-bottom: 1rem;
-                 font-weight: 600;
-             }}
-             
-             .content strong {{
-                 font-weight: 700;
-                 color: #2c3e50;
-             }}
-             
-             .content em {{
-                 font-style: italic;
-                 color: #555;
-             }}
-             
-             .content blockquote {{
-                 border-left: 4px solid #3498db;
-                 padding-left: 1.5rem;
-                 margin: 2rem 0;
-                 font-style: italic;
-                 color: #555;
-                 background: #f8f9fa;
-                 padding: 1.5rem;
-                 border-radius: 0 8px 8px 0;
-             }}
-             
-             .content ul, .content ol {{
-                 margin: 1.5rem 0;
-                 padding-left: 2rem;
-             }}
-             
-             .content li {{
-                 margin-bottom: 0.5rem;
-                 line-height: 1.6;
-             }}
-             
-             .content ul li {{
-                 list-style-type: disc;
-             }}
-             
-             .content ol li {{
-                 list-style-type: decimal;
-             }}
-            
-            .category {{
-                display: inline-block;
-                background: #3498db;
-                color: white;
-                padding: 0.3rem 0.8rem;
-                border-radius: 15px;
-                font-size: 0.8rem;
-                margin-bottom: 1rem;
-            }}
-            
-            .tags {{
-                margin-top: 2rem;
-                padding-top: 2rem;
-                border-top: 1px solid #eee;
-            }}
-            
-            .tag {{
-                display: inline-block;
-                background: #ecf0f1;
-                color: #2c3e50;
-                padding: 0.3rem 0.6rem;
-                border-radius: 10px;
-                font-size: 0.8rem;
-                margin-right: 0.5rem;
-                margin-bottom: 0.5rem;
-            }}
-            
-            .back-link {{
-                display: inline-block;
-                margin-top: 2rem;
-                color: #3498db;
-                text-decoration: none;
-                font-weight: 600;
-            }}
-            
-            .back-link:hover {{
-                text-decoration: underline;
-            }}
-            
-            @media (max-width: 768px) {{
-                .container {{
-                    margin: 0 1rem;
-                    padding: 2rem;
-                }}
-                
-                h1 {{
-                    font-size: 2rem;
-                }}
-                
-                .content {{
-                    font-size: 1rem;
-                }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <article itemscope itemtype="https://schema.org/{content_item.schema_type or 'Article'}">
-                <header>
-                    {f'<div class="category">{content_item.category.name}</div>' if content_item.category else ''}
-                    <h1 itemprop="headline">{content_item.title}</h1>
-                    <p class="meta">
-                        <time datetime="{iso_date}" itemprop="datePublished">{formatted_date}</time>
-                        • Por <span itemprop="author" itemscope itemtype="https://schema.org/Person">
-                            <span itemprop="name">{content_item.author_name or author_name}</span>
-                        </span>
-                        {f' | Palabra clave: {content_item.keyword.keyword}' if content_item.keyword else ''}
-                    </p>
-                    {f'<div class="excerpt" itemprop="description">{content_item.excerpt}</div>' if content_item.excerpt else ''}
-                </header>
-                
-                <section itemprop="articleBody" class="content">
-                     {html.unescape(content_item.content) if content_item.content else ''}
-                 </section>
-                
-                {f'''
-                <div class="tags">
-                    <strong>Etiquetas:</strong>
-                    {' '.join([f'<span class="tag" itemprop="keywords">{tag.name}</span>' for tag in content_item.tags])}
-                </div>
-                ''' if content_item.tags else ''}
-                
-                <footer>
-                    <p itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
-                        Publicado por <strong itemprop="name">{content_item.publisher_name or publisher_name}</strong>
-                    </p>
-                </footer>
-            </article>
-            
-            <a href="/inicio/" class="back-link">← Volver al inicio</a>
-        </div>
-    </body>
-    </html>
-    """
+    # Preparar el contexto para el template
+    context = {
+        "request": request,
+        "post": content_item,
+        "category": category,
+        "categories": categories,
+        "tags": tags,
+        "keyword": keyword,
+        "images": images,
+        "template_theme": template_theme,
+        "site_name": "Autopublicador Web",
+        "base_url": "",
+        "current_url": str(request.url),
+        "current_page": "post"
+    }
     
-    return html_content
+    # Usar el template de post del sistema existente
+    return templates.TemplateResponse("post.html", context)
 
 @app.get("/health")
 async def health_check():

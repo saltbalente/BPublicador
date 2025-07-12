@@ -81,6 +81,7 @@ def create_content(
         focus_keyword=content.focus_keyword,
         canonical_url=content.canonical_url,
         content_type=content.content_type,
+        template_theme=content.template_theme,
         status=status,
         is_featured=content.is_featured,
         allow_comments=content.allow_comments,

@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, users, security, publication
+from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, users, security, publication, templates
 
 api_router = APIRouter()
 
@@ -79,4 +79,10 @@ api_router.include_router(
     publication.router,
     prefix="/publication",
     tags=["publicación-web"]
+)
+
+api_router.include_router(
+    templates.router,
+    prefix="/templates",
+    tags=["templates"]
 )

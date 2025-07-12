@@ -42,7 +42,7 @@ class ContentBase(BaseModel):
     # Configuración
     status: ContentStatus = ContentStatus.DRAFT
     content_type: str = "post"
-    status: ContentStatus = ContentStatus.DRAFT
+    template_theme: str = "default"
     is_featured: bool = False
     allow_comments: bool = True
     is_indexed: bool = True
@@ -103,6 +103,7 @@ class ContentCreate(BaseModel):
     # Configuración
     status: ContentStatus = ContentStatus.DRAFT
     content_type: str = "post"
+    template_theme: str = "default"
     is_featured: bool = False
     allow_comments: bool = True
     is_indexed: bool = True
@@ -163,6 +164,7 @@ class ContentUpdate(BaseModel):
     
     # Configuración
     content_type: Optional[str] = None
+    template_theme: Optional[str] = None
     status: Optional[ContentStatus] = None
     is_featured: Optional[bool] = None
     allow_comments: Optional[bool] = None
@@ -225,6 +227,7 @@ class Content(BaseModel):
     
     # Configuración
     content_type: str = "post"
+    template_theme: str = "default"
     status: ContentStatus = ContentStatus.DRAFT
     is_featured: bool = False
     allow_comments: bool = True

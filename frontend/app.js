@@ -1155,9 +1155,10 @@ function showCreateContentModal() {
         createContentModal = new bootstrap.Modal(document.getElementById('createContentModal'));
     }
     
-    // Load categories, tags, and keywords
+    // Load categories, tags, templates, and keywords
     loadCategoriesForForm();
     loadTagsForForm();
+    loadTemplatesForForm();
     loadKeywordsForGeneration();
     
     // Reset form
@@ -1204,6 +1205,33 @@ async function loadTagsForForm() {
         }
     } catch (error) {
         console.error('Error loading tags:', error);
+    }
+}
+
+async function loadTemplatesForForm() {
+    try {
+        const templates = await apiRequest('/templates/');
+        const templateSelect = document.getElementById('templateTheme');
+        if (templateSelect && templates) {
+            templateSelect.innerHTML = '';
+            templates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                templateSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading templates:', error);
+        // Set default options if API fails
+        const templateSelect = document.getElementById('templateTheme');
+        if (templateSelect) {
+            templateSelect.innerHTML = `
+                <option value="default">Default</option>
+                <option value="dark">Dark - Oscuro Minimalista</option>
+                <option value="light">Light - Claro Minimalista</option>
+            `;
+        }
     }
 }
 
@@ -1368,7 +1396,8 @@ async function saveContent() {
             status: document.getElementById('contentStatus').value,
             category_id: document.getElementById('contentCategory').value || null,
             meta_title: document.getElementById('contentMetaTitle').value.trim(),
-            meta_description: document.getElementById('contentMetaDescription').value.trim()
+            meta_description: document.getElementById('contentMetaDescription').value.trim(),
+            template_theme: document.getElementById('templateTheme').value || 'default'
         };
         
         // Handle scheduled date
@@ -1522,9 +1551,10 @@ async function editContent(contentId) {
         showLoading(true);
         const content = await apiRequest(`/content/${contentId}`);
         if (content) {
-            // Load categories and tags first
+            // Load categories, tags and templates first
             await loadCategoriesForForm();
             await loadTagsForForm();
+            await loadTemplatesForForm();
             
             // Reset form first
             document.getElementById('createContentForm').reset();
@@ -1539,6 +1569,7 @@ async function editContent(contentId) {
             document.getElementById('contentCategory').value = content.category_id || '';
             document.getElementById('contentMetaTitle').value = content.meta_title || '';
             document.getElementById('contentMetaDescription').value = content.meta_description || '';
+            document.getElementById('templateTheme').value = content.template_theme || 'default';
             
             // Handle tags
             if (content.tags && content.tags.length > 0) {
@@ -1603,7 +1634,8 @@ async function updateContent(contentId) {
             status: document.getElementById('contentStatus').value,
             category_id: document.getElementById('contentCategory').value || null,
             meta_title: document.getElementById('contentMetaTitle').value.trim(),
-            meta_description: document.getElementById('contentMetaDescription').value.trim()
+            meta_description: document.getElementById('contentMetaDescription').value.trim(),
+            template_theme: document.getElementById('templateTheme').value || 'default'
         };
         
         // Handle scheduled date

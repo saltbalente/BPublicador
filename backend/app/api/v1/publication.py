@@ -20,6 +20,22 @@ from app.models.user import User
 router = APIRouter()
 # El motor de publicación se instanciará en cada endpoint con la sesión de DB
 
+# Función helper para obtener el tema del sitio
+def get_site_theme(db: Session) -> str:
+    """Obtener el tema preferido del sitio basado en el último post publicado"""
+    try:
+        # Obtener el último post publicado para usar su tema
+        latest_post = db.query(Content).filter(
+            Content.status == "published",
+            Content.template_theme.isnot(None)
+        ).order_by(Content.created_at.desc()).first()
+        
+        if latest_post and latest_post.template_theme:
+            return latest_post.template_theme
+        return "default"
+    except:
+        return "default"
+
 # Rutas públicas del sitio web
 
 @router.get("/", response_class=HTMLResponse)
@@ -54,6 +70,7 @@ async def homepage(request: Request, db: Session = Depends(get_db)):
             "total_tags": total_tags,
             "site_title": "Autopublicador Web - Contenido IA",
             "site_description": "Plataforma de generación automática de contenido con IA",
+            "template_theme": get_site_theme(db),  # Tema del sitio basado en último post
             "base_url": str(request.base_url).rstrip('/')
         }
         
@@ -110,6 +127,7 @@ async def post_detail(slug: str, request: Request, db: Session = Depends(get_db)
             "popular_posts": popular_posts,
             "prev_post": prev_post,
             "next_post": next_post,
+            "template_theme": post.template_theme if hasattr(post, 'template_theme') else 'default',
             "base_url": str(request.base_url).rstrip('/'),
             "canonical_url": f"{str(request.base_url).rstrip('/')}/posts/{slug}"
         }
@@ -169,6 +187,7 @@ async def category_detail(slug: str, request: Request, db: Session = Depends(get
             "prev_page": page - 1 if has_prev else None,
             "next_page": page + 1 if has_next else None,
             "total_posts": total_posts,
+            "template_theme": get_site_theme(db),  # Tema del sitio basado en último post
             "base_url": str(request.base_url).rstrip('/'),
             "canonical_url": f"{str(request.base_url).rstrip('/')}/categories/{slug}"
         }
@@ -230,6 +249,7 @@ async def tag_detail(slug: str, request: Request, db: Session = Depends(get_db),
             "prev_page": page - 1 if has_prev else None,
             "next_page": page + 1 if has_next else None,
             "total_posts": total_posts,
+            "template_theme": get_site_theme(db),  # Tema del sitio basado en último post
             "base_url": str(request.base_url).rstrip('/'),
             "canonical_url": f"{str(request.base_url).rstrip('/')}/tags/{slug}"
         }
@@ -380,6 +400,7 @@ async def archive_page(request: Request, db: Session = Depends(get_db), page: in
             "has_next": has_next,
             "prev_page": page - 1 if has_prev else None,
             "next_page": page + 1 if has_next else None,
+            "template_theme": get_site_theme(db),  # Tema del sitio basado en último post
             "base_url": str(request.base_url).rstrip('/'),
             "canonical_url": f"{str(request.base_url).rstrip('/')}/archivo"
         }
@@ -508,6 +529,7 @@ async def search_page(
             "next_page": page + 1 if has_next else None,
             "per_page": 10,
             "popular_searches": popular_searches,
+            "template_theme": get_site_theme(db),  # Tema del sitio basado en último post
             "base_url": str(request.base_url).rstrip('/'),
             "canonical_url": f"{str(request.base_url).rstrip('/')}/buscar"
         }
@@ -547,6 +569,7 @@ async def error_404_page(request: Request, db: Session = Depends(get_db)):
             "total_categories": total_categories,
             "total_tags": total_tags,
             "total_images": total_images,
+            "template_theme": get_site_theme(db),  # Tema del sitio basado en último post
             "base_url": str(request.base_url).rstrip('/')
         }
         

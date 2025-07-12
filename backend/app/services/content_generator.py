@@ -111,6 +111,8 @@ Etiquetas HTML OBLIGATORIAS:
 - <ol><li> para procesos paso a paso
 - <blockquote> para citas de expertos, estadísticas importantes
 
+IMPORTANTE: NUNCA uses etiquetas <h1> en el contenido, ya que el título principal se maneja por separado en la plantilla.
+
 Tono y estilo:
 - Profesional pero accesible
 - Directo y útil para el lector
@@ -178,18 +180,18 @@ Contenido completo aquí con etiquetas HTML semánticas
         
         # Unir las líneas de contenido preservando el formato HTML
         if content_lines:
-            result["content"] = '\n'.join(content_lines).strip()
+            result["content"] = self._remove_h1_tags('\n'.join(content_lines).strip())
         
         # Si no se encontraron las secciones, usar todo como contenido
         if not result["title"] and not result["content"]:
-            result["content"] = self._process_content_for_semantic_html(content)
+            result["content"] = self._remove_h1_tags(self._process_content_for_semantic_html(content))
             # Intentar extraer el primer párrafo como título
             first_line = content.split('\n')[0].strip()
             if len(first_line) < 100:
                 result["title"] = first_line
         elif result["content"] and not self._has_html_tags(result["content"]):
             # Si el contenido no tiene etiquetas HTML, procesarlo para añadirlas
-            result["content"] = self._process_content_for_semantic_html(result["content"])
+            result["content"] = self._remove_h1_tags(self._process_content_for_semantic_html(result["content"]))
         
         return result
     
@@ -197,6 +199,14 @@ Contenido completo aquí con etiquetas HTML semánticas
         """Verificar si el contenido ya tiene etiquetas HTML"""
         html_tags = ['<p>', '<h2>', '<h3>', '<strong>', '<em>', '<ul>', '<ol>', '<li>', '<blockquote>']
         return any(tag in content for tag in html_tags)
+    
+    def _remove_h1_tags(self, content: str) -> str:
+        """Remover cualquier etiqueta h1 del contenido y convertirla a h2"""
+        import re
+        # Reemplazar <h1> con <h2> para mantener la estructura semántica
+        content = re.sub(r'<h1([^>]*)>', r'<h2\1>', content)
+        content = re.sub(r'</h1>', '</h2>', content)
+        return content
     
     def _process_content_for_semantic_html(self, content: str) -> str:
         """Procesar contenido para añadir etiquetas HTML semánticas"""

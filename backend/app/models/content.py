@@ -37,6 +37,7 @@ class Content(Base):
     
     # Configuración de contenido
     content_type = Column(String(50), default="post")
+    template_theme = Column(String(50), default="default")  # Template/tema visual
     word_count = Column(Integer)
     reading_time = Column(Integer)  # Tiempo de lectura estimado en minutos
     status = Column(Enum(ContentStatus), default=ContentStatus.DRAFT)

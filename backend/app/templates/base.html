@@ -45,7 +45,11 @@
     <!-- CSS -->
     <link rel="stylesheet" href="{{ base_url }}/static/main.css">
     <link rel="stylesheet" href="{{ base_url }}/static/pages.css">
-    {% block extra_css %}{% endblock %}
+    
+    <!-- Template Theme CSS -->
+    {% if template_theme and template_theme != 'default' %}
+    <link rel="stylesheet" href="{{ base_url }}/static/themes/{{ template_theme }}.css">
+    {% endif %}
     
     <!-- Custom CSS Block -->
     {% block extra_css %}{% endblock %}
