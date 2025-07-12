@@ -1,0 +1,1038 @@
+{% extends "base.html" %}
+
+{% block title %}{% if query %}Resultados para "{{ query }}"{% else %}Búsqueda{% endif %}{% endblock %}
+
+{% block meta_description %}{% if query %}Resultados de búsqueda para "{{ query }}". Encuentra artículos sobre brujería, esoterismo y magia.{% else %}Busca artículos sobre brujería, esoterismo y magia. Utiliza filtros avanzados para encontrar exactamente lo que necesitas.{% endif %}{% endblock %}
+
+{% block meta_keywords %}búsqueda, brujería, esoterismo, magia, artículos{% if query %}, {{ query }}{% endif %}{% endblock %}
+
+{% block extra_head %}
+<link rel="canonical" href="{{ canonical_url }}">
+<meta property="og:title" content="{% if query %}Resultados para \"{{ query }}\"{% else %}Búsqueda{% endif %} - {{ site_title }}">
+<meta property="og:description" content="{% if query %}Resultados de búsqueda para \"{{ query }}\" en {{ site_title }}{% else %}Busca contenido en nuestro sitio web{% endif %}">
+<meta property="og:url" content="{{ canonical_url }}">
+<meta property="og:type" content="website">
+{% endblock %}
+
+{% block content %}
+<div class="search-page page-container">
+    <!-- Search Header -->
+    <div class="search-header">
+        {% if query %}
+            <h1 class="search-title">🔍 Resultados para "{{ query }}"</h1>
+            {% if results %}
+                <p class="search-subtitle">Se encontraron {{ total_results }} resultado(s)</p>
+            {% else %}
+                <p class="search-subtitle">No se encontraron resultados para tu búsqueda</p>
+            {% endif %}
+        {% else %}
+            <h1 class="search-title">🔍 Búsqueda Avanzada</h1>
+            <p class="search-subtitle">Encuentra exactamente lo que buscas con nuestros filtros avanzados</p>
+        {% endif %}
+    </div>
+    
+    <!-- Search Form -->
+    <div class="search-form-container">
+        <form method="GET" action="{{ base_url }}/buscar" class="search-form">
+            <!-- Main Search -->
+            <div class="search-form-main">
+                <input type="text" name="q" class="search-input-main" 
+                       placeholder="¿Qué estás buscando?" 
+                       value="{{ query or '' }}" 
+                       aria-label="Término de búsqueda">
+                <button class="search-button-main" type="submit">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    Buscar
+                </button>
+            </div>
+            
+            <!-- Advanced Search -->
+            <div class="advanced-search">
+                <button type="button" class="advanced-search-toggle" onclick="toggleAdvancedSearch()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+                    </svg>
+                    Filtros Avanzados
+                </button>
+                
+                <div class="advanced-search-fields" id="advancedSearchFields">
+                    <div class="search-field">
+                        <label for="category">Categoría</label>
+                        <select name="category" id="category">
+                            <option value="">Todas las categorías</option>
+                            {% for category in categories %}
+                            <option value="{{ category.slug }}" 
+                                    {% if selected_category == category.slug %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="search-field">
+                        <label for="date_from">Desde</label>
+                        <input type="date" name="date_from" id="date_from" value="{{ date_from or '' }}">
+                    </div>
+                    
+                    <div class="search-field">
+                        <label for="date_to">Hasta</label>
+                        <input type="date" name="date_to" id="date_to" value="{{ date_to or '' }}">
+                    </div>
+                    
+                    <div class="search-field">
+                        <label for="sort">Ordenar por</label>
+                        <select name="sort" id="sort">
+                            <option value="relevance" {% if sort_by == 'relevance' %}selected{% endif %}>Relevancia</option>
+                            <option value="date_desc" {% if sort_by == 'date_desc' %}selected{% endif %}>Más reciente</option>
+                            <option value="date_asc" {% if sort_by == 'date_asc' %}selected{% endif %}>Más antiguo</option>
+                            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Título A-Z</option>
+                        </select>
+                    </div>
+                    
+                    <div class="search-field">
+                        <label for="tags">Etiquetas</label>
+                        <input type="text" name="tags" id="tags" placeholder="Separar con comas" value="{{ selected_tags or '' }}">
+                    </div>
+                    
+                    <div class="search-field">
+                        <button type="button" class="clear-filters-btn" onclick="clearFilters()">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    {% if query %}
+        {% if results %}
+        <!-- Search Results -->
+        <div class="search-results">
+            <!-- Results Info -->
+            <div class="results-info">
+                <div class="results-count">
+                    <p>
+                        Mostrando {{ (current_page - 1) * per_page + 1 }} - {{ min(current_page * per_page, total_results) }} 
+                        de {{ total_results }} resultado{{ 's' if total_results != 1 else '' }}
+                    </p>
+                </div>
+                <div class="view-toggle">
+                    <button type="button" class="view-btn active" data-view="list">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                        </svg>
+                        Lista
+                    </button>
+                    <button type="button" class="view-btn" data-view="grid">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/>
+                        </svg>
+                        Cuadrícula
+                    </button>
+                </div>
+            </div>
+            
+            <!-- List View -->
+            <div id="list-view" class="results-view">
+                {% for result in results %}
+                <div class="search-result-item">
+                    <div class="result-layout">
+                        <div class="result-content">
+                            <h3 class="result-title">
+                                <a href="/posts/{{ result.slug }}">{{ result.title|highlight_search(query) }}</a>
+                            </h3>
+                            
+                            <div class="result-meta">
+                                <span class="date">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                    </svg> {{ result.created_at|format_date }}
+                                </span>
+                                {% if result.category %}
+                                <span class="category">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
+                                    </svg> 
+                                    <a href="/categories/{{ result.category.slug }}">{{ result.category.name }}</a>
+                                </span>
+                                {% endif %}
+                                <span class="reading-time">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.7L16.2,16.2Z"/>
+                                    </svg> {{ result.content|reading_time }} min lectura
+                                </span>
+                                {% if result.keyword %}
+                                <span class="keyword">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
+                                    </svg> {{ result.keyword.keyword }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="result-excerpt">{{ result.excerpt or (result.content[:200] + '...' if result.content|length > 200 else result.content)|highlight_search(query) }}</p>
+                            
+                            {% if result.tags %}
+                            <div class="result-tags">
+                                {% for tag in result.tags[:5] %}
+                                <a href="/tags/{{ tag.slug }}" class="tag-link">{{ tag.name }}</a>
+                                {% endfor %}
+                                {% if result.tags|length > 5 %}
+                                <span class="tag-more">+{{ result.tags|length - 5 }}</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="result-image">
+                            {% if result.images and result.images[0] %}
+                            <div class="result-thumbnail">
+                                <img src="{{ base_url }}{{ result.images[0].image_path }}" 
+                                     alt="{{ result.images[0].alt_text or result.title }}" 
+                                     class="thumbnail-img">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Grid View -->
+            <div id="grid-view" class="results-view" style="display: none;">
+                <div class="results-grid">
+                    {% for result in results %}
+                    <div class="grid-item">
+                        <div class="result-card">
+                            {% if result.images and result.images[0] %}
+                            <img src="{{ base_url }}{{ result.images[0].image_path }}" 
+                                 class="card-image" 
+                                 alt="{{ result.images[0].alt_text or result.title }}" 
+                                 style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                {% if result.category %}
+                                <span class="category-badge">{{ result.category.name }}</span>
+                                {% endif %}
+                                
+                                <h5 class="card-title">
+                                    <a href="/posts/{{ result.slug }}" class="title-link">{{ result.title|highlight_search(query) }}</a>
+                                </h5>
+                                
+                                <p class="card-text">{{ result.excerpt or (result.content[:100] + '...' if result.content|length > 100 else result.content)|highlight_search(query) }}</p>
+                                
+                                <div class="card-meta">
+                                    <small class="meta-text">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                        </svg> {{ result.created_at|format_date }}
+                                        <span class="meta-separator">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.7L16.2,16.2Z"/>
+                                            </svg> {{ result.content|reading_time }} min
+                                        </span>
+                                    </small>
+                                </div>
+                                
+                                {% if result.tags %}
+                                <div class="result-tags">
+                                    {% for tag in result.tags[:3] %}
+                                    <span class="tag-badge">{{ tag.name }}</span>
+                                    {% endfor %}
+                                    {% if result.tags|length > 3 %}
+                                    <span class="tag-badge tag-more">+{{ result.tags|length - 3 }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav class="pagination-nav" aria-label="Paginación de resultados">
+                <div class="pagination">
+                    {% if has_prev %}
+                    <a class="pagination-btn pagination-prev" href="/buscar?q={{ query }}&page={{ prev_page }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_tags %}&tags={{ selected_tags }}{% endif %}" aria-label="Anterior">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                        </svg>
+                        Anterior
+                    </a>
+                    {% endif %}
+                    
+                    <div class="pagination-numbers">
+                        {% for page_num in range(1, total_pages + 1) %}
+                            {% if page_num == current_page %}
+                            <span class="pagination-number active">{{ page_num }}</span>
+                            {% elif page_num <= 3 or page_num > total_pages - 3 or (page_num >= current_page - 1 and page_num <= current_page + 1) %}
+                            <a class="pagination-number" href="/buscar?q={{ query }}&page={{ page_num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_tags %}&tags={{ selected_tags }}{% endif %}">{{ page_num }}</a>
+                            {% elif page_num == 4 or page_num == total_pages - 3 %}
+                            <span class="pagination-ellipsis">...</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    {% if has_next %}
+                    <a class="pagination-btn pagination-next" href="/buscar?q={{ query }}&page={{ next_page }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if selected_tags %}&tags={{ selected_tags }}{% endif %}" aria-label="Siguiente">
+                        Siguiente
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+            </nav>
+            {% endif %}
+        </div>
+        
+        {% else %}
+        <!-- No Results -->
+        <div class="no-results">
+            <div class="no-results-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+            </div>
+            
+            <h3 class="no-results-title">No se encontraron resultados</h3>
+            <p class="no-results-text">No pudimos encontrar contenido que coincida con tu búsqueda "{{ query }}"</p>
+            
+            <div class="search-suggestions">
+                <h4 class="suggestions-title">Sugerencias:</h4>
+                <ul class="suggestions-list">
+                    <li>Verifica la ortografía de las palabras</li>
+                    <li>Intenta con términos más generales</li>
+                    <li>Usa menos palabras clave</li>
+                    <li>Prueba con sinónimos</li>
+                </ul>
+            </div>
+            
+            <!-- Popular Searches -->
+            {% if popular_searches %}
+            <div class="popular-searches">
+                <h4 class="popular-title">Búsquedas populares:</h4>
+                <div class="popular-tags">
+                    {% for search in popular_searches %}
+                    <a href="{{ base_url }}/buscar?q={{ search }}" class="popular-tag">
+                        {{ search }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+    <!-- Search Tips -->
+    <div class="search-tips">
+        <h3 class="tips-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 21c0 .5.4 1 1 1h4c.6 0 1-.5 1-1v-1H9v1zm3-19C8.1 2 5 5.1 5 9c0 2.4 1.2 4.5 3 5.7V17c0 .5.4 1 1 1h6c.6 0 1-.5 1-1v-2.3c1.8-1.3 3-3.4 3-5.7 0-3.9-3.1-7-7-7z"/>
+            </svg>
+            Consejos de búsqueda
+        </h3>
+        
+        <div class="tips-grid">
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/>
+                    </svg>
+                </div>
+                <h5 class="tip-title">Usa comillas</h5>
+                <p class="tip-text">Para buscar frases exactas: "magia blanca"</p>
+            </div>
+            
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                </div>
+                <h5 class="tip-title">Combina términos</h5>
+                <p class="tip-text">Usa + para incluir: brujería +ritual</p>
+            </div>
+            
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13H5v-2h14v2z"/>
+                    </svg>
+                </div>
+                <h5 class="tip-title">Excluye palabras</h5>
+                <p class="tip-text">Usa - para excluir: magia -negra</p>
+            </div>
+            
+            <div class="tip-item">
+                <div class="tip-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <h5 class="tip-title">Comodines</h5>
+                <p class="tip-text">Usa * para completar: ritual*</p>
+            </div>
+        </div>
+        
+        <!-- Popular Categories -->
+        {% if categories %}
+        <div class="popular-categories">
+            <h4 class="categories-title">📂 Explora por categorías</h4>
+            <div class="categories-grid">
+                {% for category in categories[:6] %}
+                <a href="{{ base_url }}/categories/{{ category.slug }}" class="category-card">
+                    <div class="category-content">
+                        <h5 class="category-name">{{ category.name }}</h5>
+                        <p class="category-description">{{ category.description or 'Explora contenido sobre ' + category.name }}</p>
+                        <span class="category-count">{{ category.posts|length }} posts</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page Layout */
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.search-page {
+    padding: 2rem 0;
+}
+
+/* Search Form */
+.search-form-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.search-form-main {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-input-main {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.search-button-main {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.search-button-main:hover {
+    background: #34495e;
+    transform: translateY(-2px);
+}
+
+.advanced-search-toggle {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.advanced-search-toggle:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.advanced-search-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.search-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.search-field input,
+.search-field select {
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.9);
+    color: #333;
+}
+
+.clear-filters-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clear-filters-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Results Layout */
+.result-layout {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.result-content {
+    min-width: 0;
+}
+
+.result-image {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.grid-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.result-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-badge {
+    background: #3498db;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    align-self: flex-start;
+}
+
+.card-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.title-link {
+    color: #2c3e50;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.title-link:hover {
+    color: #3498db;
+}
+
+.card-text {
+    color: #6c757d;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.card-meta {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #f8f9fa;
+}
+
+.meta-text {
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-separator {
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Search Results */
+.search-result-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 1.5rem;
+}
+
+.search-result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.result-title {
+    margin: 0 0 1rem 0;
+}
+
+.result-title a {
+    color: #2c3e50;
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.result-title a:hover {
+    color: #3498db;
+}
+
+.result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.result-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-meta a {
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.result-meta a:hover {
+    color: #2c3e50;
+}
+
+.result-excerpt {
+    color: #6c757d;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.result-thumbnail {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.thumbnail-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.thumbnail-img:hover {
+    transform: scale(1.05);
+}
+
+.result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-link {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.tag-link:hover {
+    background: #3498db;
+    color: white;
+}
+
+.tag-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.tag-more {
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.results-info {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-btn {
+    background: white;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.view-btn.active,
+.view-btn:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.no-results {
+    background: #f8f9fa;
+    border-radius: 15px;
+    margin: 2rem 0;
+}
+
+.suggestions ul {
+    text-align: left;
+    display: inline-block;
+}
+
+.popular-searches .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.search-tips .card {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.category-card .card {
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.category-card:hover .card {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.highlight {
+    background-color: #fff3cd;
+    padding: 0.1rem 0.2rem;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .search-form-container {
+        padding: 1rem;
+    }
+    
+    .result-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .results-info .row {
+        text-align: center;
+    }
+    
+    .results-info .btn-group {
+        margin-top: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize search page
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof AutopublicadorWeb !== 'undefined') {
+        AutopublicadorWeb.initSearchPage();
+    }
+    
+    // Initialize search page functionality
+    initSearchPage();
+});
+
+// Initialize all search page functionality
+function initSearchPage() {
+    setupViewToggle();
+    setupAdvancedSearchToggle();
+    setupSearchAnimations();
+    setupResultsInteractions();
+    highlightSearchTerms();
+}
+
+// Setup view toggle functionality
+function setupViewToggle() {
+    const viewButtons = document.querySelectorAll('.view-btn');
+    const listView = document.getElementById('list-view');
+    const gridView = document.getElementById('grid-view');
+    
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.dataset.view;
+            
+            // Update active button
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Toggle views
+            if (view === 'list') {
+                listView.style.display = 'block';
+                gridView.style.display = 'none';
+            } else {
+                listView.style.display = 'none';
+                gridView.style.display = 'block';
+            }
+            
+            // Save preference
+            localStorage.setItem('search-view', view);
+        });
+    });
+    
+    // Restore saved view preference
+    const savedView = localStorage.getItem('search-view');
+    if (savedView) {
+        const savedButton = document.querySelector(`[data-view="${savedView}"]`);
+        if (savedButton) {
+            savedButton.click();
+        }
+    }
+}
+
+// Setup advanced search toggle
+function setupAdvancedSearchToggle() {
+    const toggle = document.querySelector('.advanced-search-toggle');
+    const fields = document.getElementById('advancedSearchFields');
+    
+    if (toggle && fields) {
+        toggle.addEventListener('click', function() {
+            const isVisible = fields.style.display === 'block';
+            fields.style.display = isVisible ? 'none' : 'block';
+            this.classList.toggle('active', !isVisible);
+        });
+        
+        // Show if there are active filters
+        const hasActiveFilters = checkActiveFilters();
+        if (hasActiveFilters) {
+            fields.style.display = 'block';
+            toggle.classList.add('active');
+        }
+    }
+}
+
+// Check if there are active filters
+function checkActiveFilters() {
+    const categorySelect = document.querySelector('select[name="category"]');
+    const dateFromInput = document.querySelector('input[name="date_from"]');
+    const dateToInput = document.querySelector('input[name="date_to"]');
+    const tagsInput = document.querySelector('input[name="tags"]');
+    const sortSelect = document.querySelector('select[name="sort"]');
+    
+    return (categorySelect && categorySelect.value) ||
+           (dateFromInput && dateFromInput.value) ||
+           (dateToInput && dateToInput.value) ||
+           (tagsInput && tagsInput.value) ||
+           (sortSelect && sortSelect.value !== 'relevance');
+}
+
+// Setup search animations
+function setupSearchAnimations() {
+    const resultItems = document.querySelectorAll('.search-result-item, .result-card');
+    
+    // Animate results on load
+    resultItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.6s ease';
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+}
+
+// Setup results interactions
+function setupResultsInteractions() {
+    // Image hover effects
+    const thumbnails = document.querySelectorAll('.thumbnail-img, .card-image');
+    thumbnails.forEach(img => {
+        img.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        img.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Tag interactions
+    const tagLinks = document.querySelectorAll('.tag-link');
+    tagLinks.forEach(tag => {
+        tag.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        tag.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+}
+
+// Advanced search toggle (legacy function for onclick)
+function toggleAdvancedSearch() {
+    const fields = document.getElementById('advancedSearchFields');
+    const toggle = document.querySelector('.advanced-search-toggle');
+    
+    if (fields && toggle) {
+        const isVisible = fields.style.display === 'block';
+        fields.style.display = isVisible ? 'none' : 'block';
+        toggle.classList.toggle('active', !isVisible);
+    }
+}
+
+// Clear filters
+function clearFilters() {
+    const form = document.querySelector('.search-form');
+    if (form) {
+        // Clear all inputs except the main search
+        const inputs = form.querySelectorAll('input:not([name="q"]), select');
+        inputs.forEach(input => {
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            } else if (input.name === 'sort') {
+                input.value = 'relevance';
+            } else {
+                input.value = '';
+            }
+        });
+        
+        // Submit form to apply cleared filters
+        form.submit();
+    }
+}
+
+// Highlight search terms in results
+function highlightSearchTerms() {
+    const query = '{{ query|safe }}';
+    if (!query) return;
+    
+    const terms = query.toLowerCase().split(' ').filter(term => term.length > 2);
+    const resultItems = document.querySelectorAll('.search-result-item');
+    
+    resultItems.forEach(item => {
+        const title = item.querySelector('.result-title a');
+        const excerpt = item.querySelector('.result-excerpt');
+        
+        if (title) highlightText(title, terms);
+        if (excerpt) highlightText(excerpt, terms);
+    });
+}
+
+// Highlight text function
+function highlightText(element, terms) {
+    let html = element.innerHTML;
+    
+    terms.forEach(term => {
+        const regex = new RegExp(`(${term})`, 'gi');
+        html = html.replace(regex, '<mark>$1</mark>');
+    });
+    
+    element.innerHTML = html;
+}
+</script>
+{% endblock %}

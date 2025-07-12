@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+
+    <!-- Homepage -->
+    <url>
+        <loc>{{ base_url }}/</loc>
+        <lastmod>{% if posts %}{{ posts[0].updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if posts[0].updated_at else posts[0].created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% else %}{{ "2024-01-01T00:00:00+00:00" }}{% endif %}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- Categories Index -->
+    <url>
+        <loc>{{ base_url }}/categories</loc>
+        <lastmod>{% if categories %}{{ categories[0].updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if categories[0].updated_at else categories[0].created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% else %}{{ "2024-01-01T00:00:00+00:00" }}{% endif %}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Tags Index -->
+    <url>
+        <loc>{{ base_url }}/tags</loc>
+        <lastmod>{% if tags %}{{ tags[0].updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if tags[0].updated_at else tags[0].created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% else %}{{ "2024-01-01T00:00:00+00:00" }}{% endif %}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <!-- Archive Page -->
+    <url>
+        <loc>{{ base_url }}/archivo</loc>
+        <lastmod>{% if posts %}{{ posts[0].updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if posts[0].updated_at else posts[0].created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% else %}{{ "2024-01-01T00:00:00+00:00" }}{% endif %}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <!-- Search Page -->
+    <url>
+        <loc>{{ base_url }}/buscar</loc>
+        <lastmod>{{ "2024-01-01T00:00:00+00:00" }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <!-- Individual Posts -->
+    {% for post in posts %}
+    <url>
+        <loc>{{ base_url }}/posts/{{ post.slug }}</loc>
+        <lastmod>{{ post.updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if post.updated_at else post.created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}</lastmod>
+        <changefreq>{% if (now() - post.created_at).days < 7 %}daily{% elif (now() - post.created_at).days < 30 %}weekly{% else %}monthly{% endif %}</changefreq>
+        <priority>{% if (now() - post.created_at).days < 7 %}0.9{% elif (now() - post.created_at).days < 30 %}0.8{% else %}0.7{% endif %}</priority>
+        
+        <!-- News sitemap for recent posts -->
+        {% if (now() - post.created_at).days < 2 %}
+        <news:news>
+            <news:publication>
+                <news:name>Autopublicador Web</news:name>
+                <news:language>es</news:language>
+            </news:publication>
+            <news:publication_date>{{ post.created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}</news:publication_date>
+            <news:title>{{ post.title|e }}</news:title>
+            {% if post.keyword %}
+            <news:keywords>{{ post.keyword.name }}{% if post.tags %}, {{ post.tags|map(attribute='name')|join(', ') }}{% endif %}</news:keywords>
+            {% endif %}
+        </news:news>
+        {% endif %}
+        
+        <!-- Image sitemap -->
+        {% if post.images %}
+        {% for image in post.images %}
+        <image:image>
+            <image:loc>{{ base_url }}{{ image.image_path }}</image:loc>
+            {% if image.alt_text %}
+            <image:caption>{{ image.alt_text|e }}</image:caption>
+            {% endif %}
+            <image:title>{{ image.alt_text|e if image.alt_text else post.title|e }}</image:title>
+        </image:image>
+        {% endfor %}
+        {% endif %}
+    </url>
+    {% endfor %}
+
+    <!-- Category Pages -->
+    {% for category in categories %}
+    <url>
+        <loc>{{ base_url }}/categories/{{ category.slug }}</loc>
+        <lastmod>{% if category.content_items %}{{ category.content_items|map(attribute='updated_at')|max|default(category.content_items|map(attribute='created_at')|max)|strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% else %}{{ category.updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if category.updated_at else category.created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% endif %}</lastmod>
+        <changefreq>{% if category.content_items|length > 10 %}daily{% elif category.content_items|length > 5 %}weekly{% else %}monthly{% endif %}</changefreq>
+        <priority>{% if category.content_items|length > 10 %}0.8{% elif category.content_items|length > 5 %}0.7{% else %}0.6{% endif %}</priority>
+    </url>
+    {% endfor %}
+
+    <!-- Tag Pages -->
+    {% for tag in tags %}
+    <url>
+        <loc>{{ base_url }}/tags/{{ tag.slug }}</loc>
+        <lastmod>{% if tag.content_items %}{{ tag.content_items|map(attribute='updated_at')|max|default(tag.content_items|map(attribute='created_at')|max)|strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% else %}{{ tag.updated_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') if tag.updated_at else tag.created_at.strftime('%Y-%m-%dT%H:%M:%S+00:00') }}{% endif %}</lastmod>
+        <changefreq>{% if tag.content_items|length > 5 %}weekly{% else %}monthly{% endif %}</changefreq>
+        <priority>{% if tag.content_items|length > 5 %}0.6{% else %}0.5{% endif %}</priority>
+    </url>
+    {% endfor %}
+
+    <!-- Static Pages -->
+    <url>
+        <loc>{{ base_url }}/privacidad</loc>
+        <lastmod>2024-01-01T00:00:00+00:00</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <url>
+        <loc>{{ base_url }}/terminos</loc>
+        <lastmod>2024-01-01T00:00:00+00:00</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+
+    <url>
+        <loc>{{ base_url }}/contacto</loc>
+        <lastmod>2024-01-01T00:00:00+00:00</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.4</priority>
+    </url>
+
+</urlset>

@@ -1,0 +1,169 @@
+# Robots.txt para Autopublicador Web
+# Generado automáticamente por el motor de publicación
+
+User-agent: *
+
+# Permitir acceso a contenido público
+Allow: /
+Allow: /posts/
+Allow: /categories/
+Allow: /tags/
+Allow: /archivo/
+Allow: /buscar/
+Allow: /static/
+Allow: /images/
+
+# Bloquear áreas administrativas y privadas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /login/
+Disallow: /register/
+Disallow: /backend/
+Disallow: /docs/
+Disallow: /redoc/
+Disallow: /openapi.json
+
+# Bloquear archivos temporales y de configuración
+Disallow: /tmp/
+Disallow: /.env
+Disallow: /.git/
+Disallow: /node_modules/
+Disallow: /__pycache__/
+Disallow: /*.log
+Disallow: /*.bak
+Disallow: /*.tmp
+
+# Bloquear parámetros de búsqueda y filtros
+Disallow: /*?*
+Disallow: /buscar?*
+Disallow: /*&*
+Disallow: /*sort=*
+Disallow: /*filter=*
+Disallow: /*page=*
+
+# Permitir específicamente algunos parámetros útiles para SEO
+Allow: /buscar?q=*
+Allow: /categories/*?page=*
+Allow: /tags/*?page=*
+
+# Bloquear versiones de desarrollo y testing
+Disallow: /dev/
+Disallow: /test/
+Disallow: /staging/
+Disallow: /beta/
+
+# Bloquear archivos de backup y temporales
+Disallow: /*.sql
+Disallow: /*.db
+Disallow: /*.backup
+Disallow: /*~
+
+# Configuraciones específicas para bots principales
+
+# Google Bot - Acceso completo al contenido público
+User-agent: Googlebot
+Allow: /
+Allow: /static/css/
+Allow: /static/js/
+Allow: /static/images/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Allow: /static/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+
+# Yandex Bot
+User-agent: YandexBot
+Allow: /
+Allow: /static/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+
+# Facebook Bot (para Open Graph)
+User-agent: facebookexternalhit
+Allow: /
+Allow: /posts/
+Allow: /static/images/
+Disallow: /admin/
+Disallow: /api/
+
+# Twitter Bot (para Twitter Cards)
+User-agent: Twitterbot
+Allow: /
+Allow: /posts/
+Allow: /static/images/
+Disallow: /admin/
+Disallow: /api/
+
+# LinkedIn Bot
+User-agent: LinkedInBot
+Allow: /
+Allow: /posts/
+Allow: /static/images/
+Disallow: /admin/
+Disallow: /api/
+
+# WhatsApp Bot (para previews)
+User-agent: WhatsApp
+Allow: /
+Allow: /posts/
+Allow: /static/images/
+Disallow: /admin/
+Disallow: /api/
+
+# Telegram Bot (para previews)
+User-agent: TelegramBot
+Allow: /
+Allow: /posts/
+Allow: /static/images/
+Disallow: /admin/
+Disallow: /api/
+
+# Bloquear bots maliciosos conocidos
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MajesticSEO
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Configuración de crawl delay para evitar sobrecarga
+User-agent: *
+Crawl-delay: 1
+
+# Crawl delay específico para bots pesados
+User-agent: Baiduspider
+Crawl-delay: 5
+
+User-agent: YandexBot
+Crawl-delay: 2
+
+# Ubicación del sitemap
+Sitemap: {{ base_url }}/sitemap.xml
+Sitemap: {{ base_url }}/sitemap-news.xml
+Sitemap: {{ base_url }}/sitemap-images.xml
+
+# Información adicional
+# Host: {{ base_url.replace('http://', '').replace('https://', '') }}
+# Última actualización: {{ now().strftime('%Y-%m-%d') }}
+# Generado por: Autopublicador Web v1.0

@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+
+{% block title %}Página no encontrada{% endblock %}
+
+{% block meta_description %}La página que buscas no existe. Explora nuestro contenido sobre brujería, esoterismo y magia.{% endblock %}
+
+{% block meta_keywords %}404, página no encontrada, error, brujería, esoterismo, magia{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="Página no encontrada - {{ site_title }}">
+<meta property="og:description" content="La página que buscas no existe.">
+<meta property="og:type" content="website">
+{% endblock %}
+
+{% block content %}
+<div class="error-404-page">
+    <div class="container">
+        <!-- Error Message -->
+        <div class="error-container">
+            <div class="error-animation">
+                <div class="error-number">
+                    <span class="digit">4</span>
+                    <span class="digit zero">0</span>
+                    <span class="digit">4</span>
+                </div>
+                <div class="error-particles"></div>
+            </div>
+            
+            <h1 class="error-title">¡Ups! Página no encontrada</h1>
+            <p class="error-description">
+                La página que buscas parece haber desaparecido en el éter místico.
+                Pero no te preocupes, tenemos muchas otras cosas mágicas para mostrarte.
+            </p>
+            
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{{ base_url }}/" class="action-btn primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                Ir al Inicio
+            </a>
+            <a href="{{ base_url }}/archivo" class="action-btn secondary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/>
+                </svg>
+                Ver Archivo
+            </a>
+            <a href="{{ base_url }}/buscar" class="action-btn secondary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                Buscar
+            </a>
+        </div>
+            
+        <!-- Search Bar -->
+        <div class="search-section">
+            <h3 class="search-title">🔍 ¿Buscas algo específico?</h3>
+            <form action="{{ base_url }}/buscar" method="GET" class="search-form-404">
+                <input type="text" name="q" class="search-input-404" 
+                       placeholder="Buscar artículos, rituales, hechizos..." 
+                       autocomplete="off">
+                <button class="search-button-404" type="submit">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    Buscar
+                </button>
+            </form>
+        </div>
+        </div>
+        
+        <!-- Helpful Links -->
+        <div class="helpful-links">
+            <!-- Popular Categories -->
+            {% if popular_categories %}
+            <div class="help-section">
+                <h4 class="help-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
+                    </svg>
+                    Categorías Populares
+                </h4>
+                <div class="help-list">
+                    {% for category in popular_categories[:5] %}
+                    <a href="{{ base_url }}/categoria/{{ category.slug }}" class="help-item">
+                        <span class="help-item-name">{{ category.name }}</span>
+                        <span class="help-item-count">{{ category.posts|length }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Posts -->
+            {% if recent_posts %}
+            <div class="help-section">
+                <h4 class="help-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.7L16.2,16.2Z"/>
+                    </svg>
+                    Artículos Recientes
+                </h4>
+                <div class="help-list">
+                    {% for post in recent_posts[:5] %}
+                    <a href="{{ base_url }}/{{ post.slug }}" class="help-item post-item">
+                        <div class="post-info">
+                            <span class="post-title">{{ post.title|truncate_words(8) }}</span>
+                            <span class="post-date">{{ post.created_at|format_date }}</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Popular Tags -->
+            {% if popular_tags %}
+            <div class="help-section">
+                <h4 class="help-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.63,5.84C17.27,5.33 16.67,5 16,5L5,5.01C3.9,5.01 3,5.9 3,7V17C3,18.1 3.9,19 5,19H16C16.67,19 17.27,18.67 17.63,18.16L22,12L17.63,5.84Z"/>
+                    </svg>
+                    Etiquetas Populares
+                </h4>
+                <div class="tag-cloud">
+                    {% for tag in popular_tags[:15] %}
+                    <a href="{{ base_url }}/tags/{{ tag.slug }}" class="tag-item">
+                        {{ tag.name }}
+                        <span class="tag-count">{{ tag.posts|length }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Contact Info -->
+        <div class="contact-info">
+            <h4 class="contact-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                ¿Necesitas ayuda?
+            </h4>
+            <p class="contact-text">
+                Si crees que esto es un error o necesitas ayuda específica, 
+                no dudes en contactarnos.
+            </p>
+            <a href="{{ base_url }}/contacto" class="contact-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+                Contactar
+            </a>
+        </div>
+        
+        <!-- Fun Facts -->
+        <div class="fun-facts">
+            <div class="fact-item">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                <span class="fact-number">{{ total_posts or 0 }}</span>
+                <span class="fact-label">Artículos</span>
+            </div>
+            
+            <div class="fact-item">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
+                </svg>
+                <span class="fact-number">{{ total_categories or 0 }}</span>
+                <span class="fact-label">Categorías</span>
+            </div>
+            
+            <div class="fact-item">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.63,5.84C17.27,5.33 16.67,5 16,5L5,5.01C3.9,5.01 3,5.9 3,7V17C3,18.1 3.9,19 5,19H16C16.67,19 17.27,18.67 17.63,18.16L22,12L17.63,5.84Z"/>
+                </svg>
+                <span class="fact-number">{{ total_tags or 0 }}</span>
+                <span class="fact-label">Etiquetas</span>
+            </div>
+            
+            <div class="fact-item">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                </svg>
+                <span class="fact-number">{{ total_images or 0 }}</span>
+                <span class="fact-label">Imágenes</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-page {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.error-animation {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.error-number {
+    font-size: 8rem;
+    font-weight: 900;
+    color: #e74c3c;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    display: inline-block;
+}
+
+.error-number .four:first-child {
+    animation: bounce 2s infinite;
+}
+
+.error-number .zero {
+    animation: pulse 2s infinite;
+    color: #3498db;
+}
+
+.error-number .four:last-child {
+    animation: bounce 2s infinite 0.5s;
+}
+
+.error-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: #95a5a6;
+    animation: float 3s ease-in-out infinite;
+}
+
+.error-title {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.error-description {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.quick-actions .btn {
+    margin: 0.5rem;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.quick-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.error-search {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    color: white;
+}
+
+.error-search h4 {
+    color: white;
+}
+
+.error-search .form-control {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 50px 0 0 50px;
+}
+
+.error-search .btn {
+    border-radius: 0 50px 50px 0;
+    border: none;
+    background: #2c3e50;
+}
+
+.helpful-links {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-top: 2rem;
+}
+
+.help-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 100%;
+}
+
+.help-title {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.help-section ul li a {
+    color: #34495e;
+    transition: color 0.2s;
+}
+
+.help-section ul li a:hover {
+    color: #3498db;
+}
+
+.tag-cloud {
+    line-height: 2;
+}
+
+.badge-outline {
+    background: transparent;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.badge-outline:hover {
+    background: #3498db;
+    border-color: #3498db;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.contact-info {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+}
+
+.contact-info h5 {
+    color: white;
+}
+
+.contact-buttons .btn {
+    border-color: white;
+    color: white;
+    margin: 0.25rem;
+}
+
+.contact-buttons .btn:hover {
+    background: white;
+    color: #0984e3;
+}
+
+.fun-facts {
+    background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+    padding: 2rem;
+    border-radius: 15px;
+    color: white;
+}
+
+.fact-item {
+    padding: 1rem;
+}
+
+.fact-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.fact-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+/* Animations */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-20px);
+    }
+    60% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes float {
+    0% {
+        transform: translate(-50%, -50%) translateY(0px);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-10px);
+    }
+    100% {
+        transform: translate(-50%, -50%) translateY(0px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .error-number {
+        font-size: 5rem;
+    }
+    
+    .error-title {
+        font-size: 2rem;
+    }
+    
+    .error-description {
+        font-size: 1rem;
+    }
+    
+    .quick-actions .btn {
+        display: block;
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+    
+    .error-search,
+    .helpful-links,
+    .contact-info,
+    .fun-facts {
+        padding: 1rem;
+    }
+    
+    .fact-number {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .error-number {
+        font-size: 4rem;
+    }
+    
+    .error-icon {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inicializar página 404
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar funcionalidades de AutopublicadorWeb
+    if (typeof AutopublicadorWeb !== 'undefined') {
+        AutopublicadorWeb.init404Page();
+    }
+    
+    // Animación de entrada para los elementos
+    animatePageElements();
+    
+    // Efecto de partículas en el fondo
+    createParticles();
+    
+    // Auto-focus en el campo de búsqueda
+    const searchInput = document.querySelector('.search-input-404');
+    if (searchInput) {
+        setTimeout(() => {
+            searchInput.focus();
+        }, 1000);
+    }
+});
+
+// Animar elementos de la página
+function animatePageElements() {
+    const elements = document.querySelectorAll('.error-animation, .quick-actions .action-btn, .help-section, .fact-item');
+    
+    elements.forEach((element, index) => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            element.style.transition = 'all 0.6s ease';
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+}
+
+// Crear efecto de partículas
+function createParticles() {
+    const container = document.querySelector('.error-container');
+    if (!container) return;
+    
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.cssText = `
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary-color, #007bff);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float ${3 + Math.random() * 4}s infinite ease-in-out;
+            left: ${Math.random() * 100}%;
+            top: ${Math.random() * 100}%;
+            animation-delay: ${Math.random() * 2}s;
+        `;
+        container.appendChild(particle);
+    }
+}
+
+// Función para manejar búsqueda desde 404
+function handleSearch(event) {
+    event.preventDefault();
+    const searchInput = document.querySelector('.search-input-404');
+    const query = searchInput.value.trim();
+    
+    if (query) {
+        window.location.href = `{{ base_url }}/buscar?q=${encodeURIComponent(query)}`;
+    }
+}
+
+// Agregar event listener al formulario de búsqueda
+const searchForm = document.querySelector('.search-form-404');
+if (searchForm) {
+    searchForm.addEventListener('submit', handleSearch);
+}
+
+// Tracking de errores 404 (opcional)
+if (typeof gtag !== 'undefined') {
+    gtag('event', 'page_view', {
+        page_title: '404 Error',
+        page_location: window.location.href,
+        custom_map: {'custom_parameter_1': 'error_404'}
+    });
+}
+</script>
+{% endblock %}

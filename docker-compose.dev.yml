@@ -1,0 +1,73 @@
+# Docker Compose para desarrollo local
+# Uso: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: autopublicador_dev_db
+    environment:
+      POSTGRES_DB: autopublicador_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_pass
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Puerto diferente para no conflictar
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+  # Redis para cache
+  redis:
+    image: redis:7-alpine
+    container_name: autopublicador_dev_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"  # Puerto diferente para no conflictar
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+  # Adminer para gestión de base de datos
+  adminer:
+    image: adminer:latest
+    container_name: autopublicador_dev_adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: pepa-linha
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+  # Redis Commander para gestión de Redis
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: autopublicador_dev_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - dev_network
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  dev_network:
+    driver: bridge

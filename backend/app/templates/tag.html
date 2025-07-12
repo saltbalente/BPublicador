@@ -1,0 +1,1252 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tag.name }} - Etiquetas{% endblock %}
+
+{% block content %}
+<div class="tag-page page-main">
+    <div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-main">
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb-nav">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ base_url }}/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="{{ base_url }}/tags">Etiquetas</a></li>
+                        <li class="breadcrumb-item active">#{{ tag.name }}</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="page-title">
+                    <svg class="title-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M5.41 21L6.12 17H2.12L2.47 15H6.47L7.53 9H3.53L3.88 7H7.88L8.59 3H10.59L9.88 7H15.88L16.59 3H18.59L17.88 7H21.88L21.53 9H17.53L16.47 15H20.47L20.12 17H16.12L15.41 21H13.41L14.12 17H8.12L7.41 21H5.41ZM9.53 9L8.47 15H14.47L15.53 9H9.53Z"/>
+                    </svg>
+                    #{{ tag.name }}
+                </h1>
+                
+                {% if tag.description %}
+                <p class="page-description">{{ tag.description }}</p>
+                {% endif %}
+                
+                <div class="tag-stats">
+                    <div class="stat-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                        </svg>
+                        {{ posts|length }} artículo{{ 's' if posts|length != 1 else '' }} etiquetado{{ 's' if posts|length != 1 else '' }}
+                    </div>
+                    {% if posts %}
+                    <div class="stat-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19M5,6V5H19V6H5Z"/>
+                        </svg>
+                        Último: {{ posts[0].created_at|format_date('%d/%m/%Y') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <!-- Tag Actions -->
+                <div class="tag-actions">
+                    <a href="{{ base_url }}/rss.xml?tag={{ tag.slug }}" class="action-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6.503 20.752c0 1.794-1.456 3.248-3.251 3.248-1.796 0-3.252-1.454-3.252-3.248 0-1.794 1.456-3.248 3.252-3.248 1.795.001 3.251 1.454 3.251 3.248zm-6.503-12.572v4.811c6.05.062 10.96 4.966 11.022 11.009h4.817c-.062-8.71-7.118-15.758-15.839-15.82zm0-3.368c10.58.046 19.152 8.594 19.183 19.188h4.817c-.03-13.231-10.755-23.954-24-24v4.812z"/>
+                        </svg>
+                        RSS
+                    </a>
+                    <div class="sort-dropdown">
+                        <button type="button" class="action-btn" onclick="toggleSortMenu()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3,13H15V11H3M3,6V8H21V6M3,18H9V16H3V18Z"/>
+                            </svg>
+                            Ordenar
+                        </button>
+                        <div class="sort-menu" id="sortMenu">
+                            <a class="sort-item" href="?sort=newest">Más recientes</a>
+                            <a class="sort-item" href="?sort=oldest">Más antiguos</a>
+                            <a class="sort-item" href="?sort=title">Por título</a>
+                            <a class="sort-item" href="?sort=popular">Más populares</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if posts %}
+    <!-- Posts List -->
+    <div class="posts-list">
+        {% for post in posts %}
+        <article class="post-item">
+            <div class="post-card">
+                {% if post.images %}
+                {% set featured_image = post.images|selectattr('is_featured')|first or post.images[0] %}
+                <div class="post-layout with-image">
+                    <!-- Post Image -->
+                    <div class="post-image">
+                        <img src="{{ featured_image.image_path }}" 
+                             alt="{{ featured_image.alt_text or post.title }}">
+                        <div class="image-overlay">
+                            <a href="{{ base_url }}/posts/{{ post.slug }}" class="overlay-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                                </svg>
+                                Leer
+                            </a>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                {% else %}
+                <div class="post-layout no-image">
+                    <div class="post-content">
+                {% endif %}
+                        <!-- Post Meta -->
+                        <div class="post-meta">
+                            <div class="meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19M5,6V5H19V6H5Z"/>
+                                </svg>
+                                {{ post.created_at|format_date('%d de %B, %Y') }}
+                            </div>
+                            <div class="meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/>
+                                </svg>
+                                {{ post.content|reading_time }}
+                            </div>
+                            {% if post.category %}
+                            <a href="{{ base_url }}/categories/{{ post.category.slug }}" class="category-badge">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/>
+                                </svg>
+                                {{ post.category.name }}
+                            </a>
+                            {% endif %}
+                            {% if post.keyword %}
+                            <div class="meta-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7,14A2,2 0 0,1 5,12A2,2 0 0,1 7,10A2,2 0 0,1 9,12A2,2 0 0,1 7,14M12.65,10C11.83,7.67 9.61,6 7,6A6,6 0 0,0 1,12A6,6 0 0,0 7,18C9.61,18 11.83,16.33 12.65,14H17V18H21V14H23V10H12.65Z"/>
+                                </svg>
+                                {{ post.keyword.name }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Post Title -->
+                        <h3 class="post-title">
+                            <a href="{{ base_url }}/posts/{{ post.slug }}" class="title-link">
+                                {{ post.title }}
+                            </a>
+                        </h3>
+                        
+                        <!-- Post Excerpt -->
+                        <p class="post-excerpt">
+                            {{ post.content|striptags|truncate_words(35) }}
+                        </p>
+                        
+                        <!-- Post Tags -->
+                        {% if post.tags %}
+                        <div class="post-tags">
+                            {% for post_tag in post.tags[:5] %}
+                            <a href="{{ base_url }}/tags/{{ post_tag.slug }}" 
+                               class="tag-link {{ 'current-tag' if post_tag.slug == tag.slug else '' }}">
+                                #{{ post_tag.name }}
+                            </a>
+                            {% endfor %}
+                            {% if post.tags|length > 5 %}
+                            <span class="tag-more">+{{ post.tags|length - 5 }} más</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Read More and Share -->
+                        <div class="post-actions">
+                            <div class="read-more">
+                                <a href="{{ base_url }}/posts/{{ post.slug }}" class="read-more-btn">
+                                    Leer artículo completo
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                            
+                            <!-- Share Buttons -->
+                            <div class="share-buttons">
+                                <span class="share-label">Compartir:</span>
+                                <a href="https://twitter.com/intent/tweet?url={{ base_url }}/posts/{{ post.slug }}&text={{ post.title|urlencode }}" 
+                                   target="_blank" 
+                                   class="share-btn twitter" 
+                                   title="Compartir en Twitter">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M22.46,6C21.69,6.35 20.86,6.58 20,6.69C20.88,6.16 21.56,5.32 21.88,4.31C21.05,4.81 20.13,5.16 19.16,5.36C18.37,4.5 17.26,4 16,4C13.65,4 11.73,5.92 11.73,8.29C11.73,8.63 11.77,8.96 11.84,9.27C8.28,9.09 5.11,7.38 3,4.79C2.63,5.42 2.42,6.16 2.42,6.94C2.42,8.43 3.17,9.75 4.33,10.5C3.62,10.5 2.96,10.3 2.38,10C2.38,10 2.38,10 2.38,10.03C2.38,12.11 3.86,13.85 5.82,14.24C5.46,14.34 5.08,14.39 4.69,14.39C4.42,14.39 4.15,14.36 3.89,14.31C4.43,16 6,17.26 7.89,17.29C6.43,18.45 4.58,19.13 2.56,19.13C2.22,19.13 1.88,19.11 1.54,19.07C3.44,20.29 5.7,21 8.12,21C16,21 20.33,14.46 20.33,8.79C20.33,8.6 20.33,8.42 20.32,8.23C21.16,7.63 21.88,6.87 22.46,6Z"/>
+                                    </svg>
+                                </a>
+                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ base_url }}/posts/{{ post.slug }}" 
+                                   target="_blank" 
+                                   class="share-btn facebook" 
+                                   title="Compartir en Facebook">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if posts|length > 10 %}
+        <nav class="pagination-nav">
+            <div class="pagination">
+                <span class="page-item disabled">
+                    <span class="page-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/>
+                        </svg>
+                        Anterior
+                    </span>
+                </span>
+                <span class="page-item current">
+                    <span class="page-link">1</span>
+                </span>
+                <a class="page-item" href="{{ base_url }}/tags/{{ tag.slug }}?page=2">
+                    <span class="page-link">2</span>
+                </a>
+                <span class="ellipsis">...</span>
+                <a class="page-item" href="{{ base_url }}/tags/{{ tag.slug }}?page=2">
+                    <span class="page-link">
+                        Siguiente
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </span>
+                </a>
+            </div>
+        </nav>
+        {% endif %}
+    </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.41 21L6.12 17H2.12L2.47 15H6.47L7.53 9H3.53L3.88 7H7.88L8.59 3H10.59L9.88 7H15.88L16.59 3H18.59L17.88 7H21.88L21.53 9H17.53L16.47 15H20.47L20.12 17H16.12L15.41 21H13.41L14.12 17H8.12L7.41 21H5.41ZM9.53 9L8.47 15H14.47L15.53 9H9.53Z"/>
+            </svg>
+        </div>
+        <h3 class="empty-title">No hay artículos con esta etiqueta</h3>
+        <p class="empty-text">Pronto tendremos contenido etiquetado como <strong>#{{ tag.name }}</strong>.</p>
+        <a href="{{ base_url }}/" class="empty-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/>
+            </svg>
+            Volver al inicio
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Related Tags -->
+    {% if related_tags %}
+    <section class="related-tags">
+        <h3 class="section-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.5,9A1.5,1.5 0 0,0 7,7.5A1.5,1.5 0 0,0 5.5,6A1.5,1.5 0 0,0 4,7.5A1.5,1.5 0 0,0 5.5,9M17.41,11.58C17.77,11.94 18,12.44 18,13C18,13.56 17.77,14.06 17.41,14.42L12.42,19.41C12.06,19.77 11.56,20 11,20C10.44,20 9.94,19.77 9.58,19.41L2.59,12.42C2.23,12.06 2,11.56 2,11V4C2,2.89 2.89,2 4,2H11C11.56,2 12.06,2.23 12.42,2.59L19.41,9.58C19.77,9.94 20,10.44 20,11C20,11.56 19.77,12.06 19.41,12.42L17.41,11.58M13.54,5.71L14.54,4.71L21.41,11.58C21.77,11.94 22,12.44 22,13C22,13.56 21.77,14.06 21.41,14.42L16.42,19.41C16.06,19.77 15.56,20 15,20C14.44,20 13.94,19.77 13.58,19.41L12.42,18.25L13.54,5.71Z"/>
+            </svg>
+            Etiquetas Relacionadas
+        </h3>
+        <div class="tag-cloud">
+            {% for related_tag in related_tags %}
+            <a href="{{ base_url }}/tags/{{ related_tag.slug }}" 
+               class="cloud-tag"
+               style="font-size: {{ 0.8 + (related_tag.content_items|length * 0.1) }}rem;">
+                #{{ related_tag.name }}
+                <span class="tag-count">({{ related_tag.content_items|length }})</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    
+    <!-- Tag Statistics -->
+    <section class="tag-statistics">
+        <div class="stats-container">
+            <div class="stats-main">
+                <h3 class="section-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+                    </svg>
+                    Estadísticas de la Etiqueta
+                </h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <h4 class="stat-number">{{ posts|length }}</h4>
+                            <span class="stat-label">Artículos totales</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <h4 class="stat-number">{{ posts|map(attribute='category')|unique|list|length }}</h4>
+                            <span class="stat-label">Categorías diferentes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-sidebar">
+                <div class="tag-info">
+                    <div class="tag-info-content">
+                        <h4 class="tag-info-title">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5.41 21L6.12 17H2.12L2.47 15H6.47L7.53 9H3.53L3.88 7H7.88L8.59 3H10.59L9.88 7H15.88L16.59 3H18.59L17.88 7H21.88L21.53 9H17.53L16.47 15H20.47L20.12 17H16.12L15.41 21H13.41L14.12 17H8.12L7.41 21H5.41ZM9.53 9L8.47 15H14.47L15.53 9H9.53Z"/>
+                            </svg>
+                            #{{ tag.name }}
+                        </h4>
+                        <p class="tag-info-description">{{ tag.description or 'Etiqueta del sistema de contenido' }}</p>
+                        <small class="tag-info-date">
+                            Creada el {{ tag.created_at|format_date('%d/%m/%Y') if tag.created_at else 'fecha desconocida' }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Page layout */
+.page-main {
+    padding: 2rem 0;
+}
+
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Breadcrumb navigation */
+.breadcrumb-nav {
+    margin-bottom: 1.5rem;
+}
+
+.breadcrumb {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-item {
+    color: var(--text-muted, #666);
+}
+
+.breadcrumb-item a {
+    color: var(--primary-color, #007bff);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-dark, #0056b3);
+}
+
+.breadcrumb-item:not(:last-child)::after {
+    content: '/';
+    margin-left: 0.5rem;
+    color: var(--text-muted, #666);
+}
+
+.breadcrumb-item.active {
+    color: var(--text-color, #333);
+    font-weight: 500;
+}
+
+/* Page header */
+.page-header {
+    background: linear-gradient(135deg, var(--success-color, #28a745) 0%, var(--success-dark, #1e7e34) 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.header-main {
+    flex: 1;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    color: white;
+}
+
+.title-icon {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.page-description {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.tag-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    backdrop-filter: blur(10px);
+    font-size: 0.9rem;
+    color: white;
+    border: none;
+    box-shadow: none;
+}
+
+.header-actions {
+    flex-shrink: 0;
+}
+
+.tag-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.action-btn:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+.sort-dropdown {
+    position: relative;
+}
+
+.sort-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    margin-top: 0.25rem;
+}
+
+.sort-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.sort-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--text-color, #333);
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.sort-item:hover {
+    background-color: var(--hover-bg, #f5f5f5);
+    color: var(--text-color, #333);
+    text-decoration: none;
+}
+
+.sort-item:first-child {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.sort-item:last-child {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Posts list */
+.posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.post-item {
+    transition: transform 0.3s ease;
+}
+
+.post-item:hover {
+    transform: translateY(-3px);
+}
+
+.post-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.post-layout {
+    display: flex;
+}
+
+.post-layout.with-image {
+    flex-direction: row;
+}
+
+.post-layout.no-image {
+    flex-direction: column;
+}
+
+.post-image {
+    position: relative;
+    width: 300px;
+    height: 200px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.post-item:hover .post-image img {
+    transform: scale(1.05);
+}
+
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.post-item:hover .image-overlay {
+    opacity: 1;
+}
+
+.overlay-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--success-color, #28a745);
+    color: white;
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.overlay-btn:hover {
+    background: var(--success-dark, #1e7e34);
+    color: white;
+}
+
+.post-content {
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.category-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary-color, #007bff);
+    color: white;
+    text-decoration: none;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.category-badge:hover {
+    background: var(--primary-dark, #0056b3);
+    color: white;
+}
+
+.post-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.title-link {
+    color: var(--text-color, #333);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.title-link:hover {
+    color: var(--success-color, #28a745);
+}
+
+.post-excerpt {
+    color: var(--text-muted, #666);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tag-link {
+    padding: 0.25rem 0.75rem;
+    background: var(--tag-bg, #f0f0f0);
+    color: var(--tag-color, #666);
+    text-decoration: none;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.tag-link:hover {
+    background: var(--success-color, #28a745);
+    color: white;
+}
+
+.tag-link.current-tag {
+    background: var(--success-color, #28a745);
+    color: white;
+}
+
+.tag-more {
+    padding: 0.25rem 0.75rem;
+    background: var(--muted-bg, #e0e0e0);
+    color: var(--text-muted, #666);
+    border-radius: 1rem;
+    font-size: 0.8rem;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.read-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--success-color, #28a745);
+    color: white;
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.read-more-btn:hover {
+    background: var(--success-dark, #1e7e34);
+    color: white;
+    transform: translateX(2px);
+}
+
+.share-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.share-label {
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.share-btn.twitter {
+    background: #1da1f2;
+    color: white;
+}
+
+.share-btn.twitter:hover {
+    background: #0d8bd9;
+    color: white;
+    transform: scale(1.1);
+}
+
+.share-btn.facebook {
+    background: #1877f2;
+    color: white;
+}
+
+.share-btn.facebook:hover {
+    background: #166fe5;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Pagination */
+.pagination-nav {
+    margin-top: 3rem;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.page-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.page-item:not(.disabled):not(.active) {
+    background: white;
+    border: 1px solid var(--border-color, #e0e0e0);
+    color: var(--text-color, #333);
+}
+
+.page-item:not(.disabled):not(.active):hover {
+    background: var(--hover-bg, #f5f5f5);
+    border-color: var(--success-color, #28a745);
+    color: var(--success-color, #28a745);
+}
+
+.page-item.active {
+    background: var(--success-color, #28a745);
+    color: white;
+    border: 1px solid var(--success-color, #28a745);
+}
+
+.page-item.disabled {
+    background: var(--muted-bg, #f8f9fa);
+    color: var(--text-muted, #666);
+    border: 1px solid var(--border-color, #e0e0e0);
+    cursor: not-allowed;
+}
+
+.page-link {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--card-bg, #f8f9fa);
+    border-radius: 1rem;
+    margin: 2rem 0;
+}
+
+.empty-icon {
+    margin-bottom: 2rem;
+    opacity: 0.5;
+    color: var(--text-muted, #666);
+}
+
+.empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-muted, #666);
+    margin-bottom: 1rem;
+}
+
+.empty-text {
+    color: var(--text-muted, #666);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--success-color, #28a745);
+    color: white;
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.empty-btn:hover {
+    background: var(--success-dark, #1e7e34);
+    color: white;
+}
+
+/* Related tags */
+.related-tags {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: var(--text-color, #333);
+}
+
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.cloud-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: var(--tag-bg, #f0f0f0);
+    color: var(--tag-color, #666);
+    text-decoration: none;
+    border-radius: 2rem;
+    transition: all 0.3s ease;
+}
+
+.cloud-tag:hover {
+    background: var(--success-color, #28a745);
+    color: white;
+    transform: scale(1.05);
+}
+
+.tag-count {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+/* Tag statistics */
+.tag-statistics {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-content {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--success-color, #28a745);
+    margin: 0 0 0.5rem 0;
+}
+
+.stat-label {
+    color: var(--text-muted, #666);
+    font-size: 0.9rem;
+}
+
+.tag-info {
+    background: linear-gradient(135deg, var(--success-color, #28a745) 0%, var(--success-dark, #1e7e34) 100%);
+    border-radius: 1rem;
+    color: white;
+    height: fit-content;
+}
+
+.tag-info-content {
+    padding: 2rem;
+    text-align: center;
+}
+
+.tag-info-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.tag-info-description {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.tag-info-date {
+    opacity: 0.75;
+    font-size: 0.85rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .tag-page .page-header {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+        justify-content: center;
+    }
+    
+    .tag-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .post-layout.with-image {
+        flex-direction: column;
+    }
+    
+    .post-image {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .post-content {
+        padding: 1.5rem;
+    }
+    
+    .post-actions {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .share-buttons {
+        justify-content: center;
+    }
+    
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .tag-page .page-header {
+        padding: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .stat-item {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .post-content {
+        padding: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cloud-tag {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tag page functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initTagPage();
+});
+
+// Main initialization function
+function initTagPage() {
+    setupImageAnimations();
+    setupSortMenu();
+    setupScrollAnimations();
+    setupTagCloudInteractions();
+    setupSmoothScrolling();
+    setupEntryAnimations();
+}
+
+// Image loading animations
+function setupImageAnimations() {
+    const images = document.querySelectorAll('.post-image img');
+    images.forEach(img => {
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.3s ease';
+        
+        const handleLoad = () => {
+            img.style.opacity = '1';
+        };
+        
+        if (img.complete) {
+            handleLoad();
+        } else {
+            img.addEventListener('load', handleLoad);
+        }
+    });
+}
+
+// Sort dropdown handling
+function setupSortMenu() {
+    const sortButton = document.querySelector('[onclick="toggleSortMenu()"]');
+    const sortMenu = document.getElementById('sortMenu');
+    
+    if (sortButton && sortMenu) {
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = sortButton.closest('.sort-dropdown');
+            if (!dropdown || !dropdown.contains(event.target)) {
+                sortMenu.classList.remove('show');
+            }
+        });
+        
+        // Handle keyboard navigation
+        sortButton.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleSortMenu();
+            }
+        });
+    }
+}
+
+// Toggle sort menu function
+function toggleSortMenu() {
+    const menu = document.getElementById('sortMenu');
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+// Scroll animations for elements
+function setupScrollAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                entry.target.classList.add('animated');
+            }
+        });
+    }, observerOptions);
+    
+    // Observe stat cards and other elements
+    document.querySelectorAll('.stat-card, .post-item').forEach(element => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(20px)';
+        element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(element);
+    });
+}
+
+// Enhanced tag cloud interactions
+function setupTagCloudInteractions() {
+    document.querySelectorAll('.cloud-tag').forEach(tag => {
+        tag.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05) rotate(1deg)';
+        });
+        
+        tag.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1) rotate(0deg)';
+        });
+        
+        // Add focus handling for accessibility
+        tag.addEventListener('focus', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        tag.addEventListener('blur', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+}
+
+// Smooth scrolling for internal links
+function setupSmoothScrolling() {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+}
+
+// Entry animations for posts
+function setupEntryAnimations() {
+    const posts = document.querySelectorAll('.post-item');
+    posts.forEach((post, index) => {
+        post.style.animationDelay = `${index * 0.1}s`;
+        post.classList.add('fade-in-up');
+    });
+}
+
+// Utility function for throttling
+function throttle(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %}

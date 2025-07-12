@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO Meta Tags -->
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ meta_description }}">
+    <meta name="keywords" content="{% if keyword %}{{ keyword.name }}{% endif %}{% if tags %}, {{ tags|map(attribute='name')|join(', ') }}{% endif %}">
+    <meta name="author" content="Autopublicador Web">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.url if request else 'https://tu-dominio.com' }}">
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:description" content="{{ meta_description }}">
+    {% if featured_image %}
+    <meta property="og:image" content="{{ featured_image }}">
+    {% endif %}
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.url if request else 'https://tu-dominio.com' }}">
+    <meta property="twitter:title" content="{{ title }}">
+    <meta property="twitter:description" content="{{ meta_description }}">
+    {% if featured_image %}
+    <meta property="twitter:image" content="{{ featured_image }}">
+    {% endif %}
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{{ canonical_url or (request.url if request else 'https://tu-dominio.com') }}">
+    
+    <!-- RSS Feed -->
+    <link rel="alternate" type="application/rss+xml" title="Autopublicador Web RSS" href="{{ base_url }}/rss.xml">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ base_url }}/static/images/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ base_url }}/static/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ base_url }}/static/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ base_url }}/static/images/favicon-16x16.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ base_url }}/static/main.css">
+    <link rel="stylesheet" href="{{ base_url }}/static/pages.css">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Custom CSS Block -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Schema.org Markup -->
+    {% if schema_markup %}
+    <script type="application/ld+json">
+    {{ schema_markup|safe }}
+    </script>
+    {% endif %}
+    
+    <!-- Google Analytics (opcional) -->
+    {% if google_analytics_id %}
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ google_analytics_id }}');
+    </script>
+    {% endif %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    
+    <!-- Header -->
+    <header class="site-header" role="banner">
+        <nav class="navbar" role="navigation" aria-label="Navegación principal">
+            <div class="container">
+                <div class="navbar-brand">
+                    <a href="{{ base_url }}/" class="brand-link">
+                        <img src="{{ base_url }}/static/images/logo.svg" alt="Autopublicador Web" class="brand-logo">
+                        <span class="brand-text">Autopublicador Web</span>
+                    </a>
+                    <button class="navbar-toggle" aria-label="Abrir menú de navegación" aria-expanded="false">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
+                
+                <div class="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a href="{{ base_url }}/" class="nav-link {% if current_page == 'home' %}active{% endif %}">Inicio</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" aria-haspopup="true" aria-expanded="false">Categorías</a>
+                            <ul class="dropdown-menu">
+                                {% for category in categories[:5] if categories %}
+                                <li><a href="{{ base_url }}/categoria/{{ category.slug }}" class="dropdown-link">{{ category.name }}</a></li>
+                                {% endfor %}
+                                <li class="dropdown-divider"></li>
+                                <li><a href="{{ base_url }}/categorias" class="dropdown-link">Ver todas</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ base_url }}/archivo" class="nav-link {% if current_page == 'archive' %}active{% endif %}">Archivo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ base_url }}/buscar" class="nav-link {% if current_page == 'search' %}active{% endif %}">Buscar</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ base_url }}/contacto" class="nav-link">Contacto</a>
+                        </li>
+                    </ul>
+                    
+                    <!-- Search form -->
+                    <form class="navbar-search" action="{{ base_url }}/buscar" method="get" role="search">
+                        <div class="search-input-group">
+                            <input type="search" name="q" placeholder="Buscar..." class="search-input" aria-label="Buscar en el sitio">
+                            <button type="submit" class="search-button" aria-label="Realizar búsqueda">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Breadcrumbs -->
+        {% block breadcrumbs %}{% endblock %}
+    </header>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="main-content" role="main">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="site-footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-title">Autopublicador Web</h3>
+                    <p class="footer-description">
+                        Tu portal de contenido esotérico. Descubre el mundo de la brujería, 
+                        magia y espiritualidad con nuestros artículos y guías.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                        </a>
+                        <a href="{{ base_url }}/rss.xml" class="social-link" aria-label="RSS">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6.503 20.752c0 1.794-1.456 3.248-3.251 3.248-1.796 0-3.252-1.454-3.252-3.248 0-1.794 1.456-3.248 3.252-3.248 1.795.001 3.251 1.454 3.251 3.248zm-6.503-12.572v4.811c6.05.062 10.96 4.966 11.022 11.009h4.817c-.062-8.71-7.118-15.758-15.839-15.82zm0-3.368c10.58.046 19.152 8.594 19.183 19.188h4.817c-.03-13.231-10.755-23.954-24-24v4.812z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Navegación</h4>
+                    <ul class="footer-links">
+                        <li><a href="{{ base_url }}/" class="footer-link">Inicio</a></li>
+                        <li><a href="{{ base_url }}/archivo" class="footer-link">Archivo</a></li>
+                        <li><a href="{{ base_url }}/buscar" class="footer-link">Buscar</a></li>
+                        <li><a href="{{ base_url }}/contacto" class="footer-link">Contacto</a></li>
+                        <li><a href="{{ base_url }}/sitemap.xml" class="footer-link">Mapa del sitio</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Categorías</h4>
+                    <ul class="footer-links">
+                        {% for category in categories[:5] if categories %}
+                        <li><a href="{{ base_url }}/categoria/{{ category.slug }}" class="footer-link">{{ category.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-subtitle">Newsletter</h4>
+                    <p class="footer-text">Suscríbete para recibir las últimas actualizaciones.</p>
+                    <form class="newsletter-form" action="#" method="post">
+                        <div class="newsletter-input-group">
+                            <input type="email" name="email" placeholder="Tu email" class="newsletter-input" required aria-label="Email para newsletter">
+                            <button type="submit" class="newsletter-button">Suscribirse</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p class="copyright">
+                        &copy; {{ now().year }} Autopublicador Web. Todos los derechos reservados.
+                    </p>
+                    <ul class="footer-bottom-links">
+                        <li><a href="{{ base_url }}/privacidad" class="footer-bottom-link">Privacidad</a></li>
+                        <li><a href="{{ base_url }}/terminos" class="footer-bottom-link">Términos</a></li>
+                        <li><a href="{{ base_url }}/cookies" class="footer-bottom-link">Cookies</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scroll to top button -->
+    <button class="scroll-to-top" aria-label="Volver arriba" title="Volver arriba">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18,15 12,9 6,15"></polyline>
+        </svg>
+    </button>
+    
+    <!-- Reading progress bar -->
+    <div class="reading-progress" role="progressbar" aria-label="Progreso de lectura"></div>
+    
+    <!-- JavaScript -->
+    <script src="{{ base_url }}/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Scroll to Top Button -->
+     <button id="scrollToTop" class="scroll-to-top" aria-label="Volver arriba">
+         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+             <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+         </svg>
+     </button>
+
+     <!-- Reading Progress Bar -->
+     <div id="readingProgress" class="reading-progress"></div>
+
+     <!-- Analytics -->
+     {% block analytics %}{% endblock %}
+     
+     <script>
+        // Back to top functionality
+        window.addEventListener('scroll', function() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.style.display = 'block';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('backToTop').addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

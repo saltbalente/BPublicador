@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autopublicador Web - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/styles.css" rel="stylesheet">
+    <style>
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-radius: 0.5rem;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+        .keyword-form {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .keyword-table {
+            font-size: 0.9rem;
+        }
+        .keyword-table th {
+            background-color: #e9ecef;
+            font-weight: 600;
+            border-top: none;
+        }
+        .badge {
+            font-size: 0.75rem;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot me-2"></i>
+                Autopublicador Web
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('keywords')">
+                            <i class="fas fa-key me-1"></i>Keywords
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('content')">
+                            <i class="fas fa-file-alt me-1"></i>Contenido
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('images')">
+                            <i class="fas fa-images me-1"></i>Imágenes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('scheduler')">
+                            <i class="fas fa-clock me-1"></i>Programador
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('analytics')">
+                            <i class="fas fa-chart-bar me-1"></i>Analytics
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('settings')">
+                            <i class="fas fa-cog me-1"></i>Configuración
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i><span id="username">Usuario</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Iniciar Sesión</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Usuario</label>
+                            <input type="text" class="form-control" id="email" placeholder="Nombre de usuario" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                    </form>
+                    <hr>
+                    <p class="text-center mb-0">
+                        ¿No tienes cuenta? 
+                        <a href="#" onclick="showRegisterForm()">Regístrate aquí</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="regEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="regEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="regPassword" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="regPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="regFullName" class="form-label">Nombre de Usuario</label>
+                            <input type="text" class="form-control" id="regFullName" placeholder="Nombre de usuario" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Registrarse</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="content-section">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 id="totalKeywords">0</h4>
+                                    <p class="mb-0">Keywords</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-key fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 id="totalContent">0</h4>
+                                    <p class="mb-0">Contenido</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-file-alt fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 id="totalImages">0</h4>
+                                    <p class="mb-0">Imágenes</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-images fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 id="scheduledTasks">0</h4>
+                                    <p class="mb-0">Tareas Programadas</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-clock fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Keywords Section -->
+        <div id="keywords-section" class="content-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-key me-2"></i>Gestión de Keywords</h2>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Gestión de Keywords</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="keyword-form">
+                                <form id="keywordForm">
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label for="keywordText" class="form-label">Palabra Clave</label>
+                                            <input type="text" class="form-control" id="keywordText" placeholder="Ingresa la palabra clave" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="prioritySelect" class="form-label">Prioridad</label>
+                                            <select class="form-control" id="prioritySelect">
+                                                <option value="low">Baja</option>
+                                                <option value="medium" selected>Media</option>
+                                                <option value="high">Alta</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="searchVolumeInput" class="form-label">Volumen</label>
+                                            <input type="number" class="form-control" id="searchVolumeInput" placeholder="0" min="0">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="difficultyInput" class="form-label">Dificultad</label>
+                                            <input type="number" class="form-control" id="difficultyInput" placeholder="0-100" min="0" max="100" step="0.1">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button type="submit" class="btn btn-primary w-100 d-block"><i class="fas fa-plus me-1"></i>Agregar</button>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="categoryInput" class="form-label">Categoría</label>
+                                            <input type="text" class="form-control" id="categoryInput" placeholder="Ej: SEO, Marketing">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label for="notesInput" class="form-label">Notas</label>
+                                            <textarea class="form-control" id="notesInput" placeholder="Notas adicionales sobre esta keyword" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list me-2"></i>Lista de Keywords</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped keyword-table">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-key me-1"></i>Keyword</th>
+                                            <th><i class="fas fa-info-circle me-1"></i>Estado</th>
+                                            <th><i class="fas fa-flag me-1"></i>Prioridad</th>
+                                            <th><i class="fas fa-chart-bar me-1"></i>Volumen</th>
+                                            <th><i class="fas fa-tachometer-alt me-1"></i>Dificultad</th>
+                                            <th><i class="fas fa-folder me-1"></i>Categoría</th>
+                                            <th><i class="fas fa-calendar me-1"></i>Fecha</th>
+                                            <th><i class="fas fa-cogs me-1"></i>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="keywordsTable">
+                                        <!-- Keywords will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div id="content-section" class="content-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-file-alt me-2"></i>Gestión de Contenido</h2>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <button class="btn btn-success" onclick="showCreateContentModal()">
+                        <i class="fas fa-plus me-1"></i>Crear Nuevo Contenido
+                    </button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Lista de Contenido</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="contentList">
+                                <!-- Content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Images Section -->
+        <div id="images-section" class="content-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-images me-2"></i>Configuración de Imágenes para Contenido</h2>
+                    <p class="text-muted">Configura cómo se generarán las imágenes automáticamente basadas en tus keywords</p>
+                </div>
+            </div>
+            
+            <!-- Configuración Global de Imágenes -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configuración Global</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="imageConfigForm">
+                                <div class="mb-3">
+                                    <label for="imagesPerContent" class="form-label">Número de imágenes por contenido</label>
+                                    <select class="form-select" id="imagesPerContent">
+                                        <option value="1">1 imagen</option>
+                                        <option value="2" selected>2 imágenes</option>
+                                        <option value="3">3 imágenes</option>
+                                        <option value="4">4 imágenes</option>
+                                        <option value="5">5 imágenes</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="imageSize" class="form-label">Tamaño de imagen</label>
+                                    <select class="form-select" id="imageSize">
+                                        <option value="1024x1024" selected>Cuadrada (1024x1024)</option>
+                                        <option value="1792x1024">Horizontal (1792x1024)</option>
+                                        <option value="1024x1792">Vertical (1024x1792)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="imageQuality" class="form-label">Calidad de imagen</label>
+                                    <select class="form-select" id="imageQuality">
+                                        <option value="standard" selected>Estándar</option>
+                                        <option value="hd">Alta definición (HD)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="imagePlacement" class="form-label">Ubicación en el contenido</label>
+                                    <select class="form-select" id="imagePlacement">
+                                        <option value="beginning">Al inicio</option>
+                                        <option value="middle" selected>En el medio</option>
+                                        <option value="end">Al final</option>
+                                        <option value="distributed">Distribuidas</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="imageProvider" class="form-label">Proveedor de IA</label>
+                                    <select class="form-select" id="imageProvider">
+                                        <option value="gemini" selected>Google Gemini (Recomendado)</option>
+                                        <option value="openai">OpenAI DALL-E</option>
+                                    </select>
+                                    <small class="form-text text-muted">Gemini ofrece mejor calidad para contenido esotérico y místico</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="imageStyle" class="form-label">Estilo de imagen</label>
+                                    <select class="form-select" id="imageStyle">
+                                        <option value="realistic" selected>Realista</option>
+                                        <option value="artistic">Artístico</option>
+                                        <option value="minimalist">Minimalista</option>
+                                        <option value="vintage">Vintage</option>
+                                        <option value="modern">Moderno</option>
+                                        <option value="mystical">Místico</option>
+                                        <option value="ethereal">Etéreo</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Configuraciones específicas de Gemini -->
+                                <div id="geminiSettings" class="border rounded p-3 mb-3" style="background-color: #f8f9fa;">
+                                    <h6 class="text-primary"><i class="fas fa-brain me-2"></i>Configuración Avanzada Gemini</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label for="geminiAspectRatio" class="form-label">Proporción de aspecto</label>
+                                        <select class="form-select" id="geminiAspectRatio">
+                                            <option value="1:1" selected>Cuadrada (1:1)</option>
+                                            <option value="16:9">Horizontal (16:9)</option>
+                                            <option value="9:16">Vertical (9:16)</option>
+                                            <option value="4:3">Clásica (4:3)</option>
+                                            <option value="3:4">Retrato (3:4)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="geminiSafetyLevel" class="form-label">Nivel de seguridad</label>
+                                        <select class="form-select" id="geminiSafetyLevel">
+                                            <option value="BLOCK_MEDIUM_AND_ABOVE" selected>Medio y alto</option>
+                                            <option value="BLOCK_ONLY_HIGH">Solo alto</option>
+                                            <option value="BLOCK_LOW_AND_ABOVE">Bajo y superior</option>
+                                        </select>
+                                        <small class="form-text text-muted">Controla qué tipo de contenido se bloquea</small>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="geminiPersonGeneration" checked>
+                                        <label class="form-check-label" for="geminiPersonGeneration">
+                                            Permitir generación de personas
+                                        </label>
+                                        <small class="form-text text-muted d-block">Habilita la creación de imágenes con figuras humanas</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="autoGenerateImages" checked>
+                                    <label class="form-check-label" for="autoGenerateImages">
+                                        Generar imágenes automáticamente con el contenido
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="includeFeaturedImage" checked>
+                                    <label class="form-check-label" for="includeFeaturedImage">
+                                        Incluir imagen destacada
+                                    </label>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Guardar Configuración
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-key me-2"></i>Configuración por Keyword</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="keywordSelect" class="form-label">Seleccionar Keyword</label>
+                                <select class="form-select" id="keywordSelect">
+                                    <option value="">Selecciona una keyword...</option>
+                                </select>
+                            </div>
+                            
+                            <div id="keywordImageConfig" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="keywordImagePrompt" class="form-label">Prompt personalizado para imágenes</label>
+                                    <textarea class="form-control" id="keywordImagePrompt" rows="3" placeholder="Ej: Una imagen mística de [keyword] con elementos esotéricos..."></textarea>
+                                    <small class="form-text text-muted">Usa [keyword] para insertar la palabra clave automáticamente</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="keywordImageStyle" class="form-label">Estilo específico</label>
+                                    <select class="form-select" id="keywordImageStyle">
+                                        <option value="">Usar configuración global</option>
+                                        <option value="realistic">Realista</option>
+                                        <option value="artistic">Artístico</option>
+                                        <option value="minimalist">Minimalista</option>
+                                        <option value="vintage">Vintage</option>
+                                        <option value="modern">Moderno</option>
+                                        <option value="mystical">Místico</option>
+                                        <option value="dark">Oscuro</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="keywordImageCount" class="form-label">Número de imágenes</label>
+                                    <select class="form-select" id="keywordImageCount">
+                                        <option value="">Usar configuración global</option>
+                                        <option value="1">1 imagen</option>
+                                        <option value="2">2 imágenes</option>
+                                        <option value="3">3 imágenes</option>
+                                        <option value="4">4 imágenes</option>
+                                        <option value="5">5 imágenes</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="button" class="btn btn-success" onclick="saveKeywordImageConfig()">
+                                    <i class="fas fa-save me-1"></i>Guardar para esta Keyword
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Generación Rápida -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card border-secondary">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Generación Rápida de Imagen</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="imageForm">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="quickImagePrompt" class="form-label">Descripción de la imagen</label>
+                                            <input type="text" class="form-control" id="quickImagePrompt" placeholder="Ej: Un paisaje montañoso al atardecer..." required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="quickImageStyle" class="form-label">Estilo</label>
+                                            <select class="form-select" id="quickImageStyle">
+                                                <option value="realistic" selected>Realista</option>
+                                                <option value="artistic">Artístico</option>
+                                                <option value="minimalist">Minimalista</option>
+                                                <option value="vintage">Vintage</option>
+                                                <option value="modern">Moderno</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button type="submit" class="btn btn-secondary w-100">
+                                                <i class="fas fa-bolt me-1"></i>Generar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Generación Manual -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-magic me-2"></i>Generación Manual de Imágenes</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="manualImageForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="manualKeywordSelect" class="form-label">Keyword base</label>
+                                            <select class="form-select" id="manualKeywordSelect">
+                                                <option value="">Selecciona una keyword...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="manualImageCount" class="form-label">Cantidad</label>
+                                            <select class="form-select" id="manualImageCount">
+                                                <option value="1" selected>1 imagen</option>
+                                                <option value="2">2 imágenes</option>
+                                                <option value="3">3 imágenes</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="manualImagePrompt" class="form-label">Descripción personalizada</label>
+                                    <textarea class="form-control" id="manualImagePrompt" rows="3" placeholder="Describe la imagen que quieres generar..." required></textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-magic me-1"></i>Generar Imágenes
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Estadísticas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="imageStats">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Imágenes generadas:</span>
+                                    <span id="totalImages" class="badge bg-primary">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Este mes:</span>
+                                    <span id="monthlyImages" class="badge bg-info">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Keywords configuradas:</span>
+                                    <span id="configuredKeywords" class="badge bg-success">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Galería de Imágenes -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-images me-2"></i>Galería de Imágenes Generadas</h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadImageGallery()">
+                                <i class="fas fa-sync me-1"></i>Actualizar
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="imageGallery" class="row">
+                                <!-- Images will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scheduler Section -->
+        <div id="scheduler-section" class="content-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-clock me-2"></i>Programador de Tareas</h2>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Estado del Programador</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="schedulerStatus">
+                                <!-- Status will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Estadísticas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="schedulerStats">
+                                <!-- Stats will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analytics-section" class="content-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-chart-bar me-2"></i>Analytics</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Analytics de Keywords</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="keywordAnalytics">
+                                <!-- Analytics will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Analytics de Contenido</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="contentAnalytics">
+                                <!-- Analytics will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings-section" class="content-section" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-cog me-2"></i>Configuración</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-robot me-2"></i>Configuración de APIs de IA</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="apiSettingsForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card border-primary mb-3">
+                                            <div class="card-header bg-primary text-white">
+                                                <h6 class="mb-0"><i class="fas fa-brain me-2"></i>OpenAI</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="openaiApiKey" class="form-label">API Key</label>
+                                                    <div class="input-group">
+                                                        <input type="password" class="form-control" id="openaiApiKey" placeholder="sk-...">
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('openaiApiKey')">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                    <small class="text-muted">Obtén tu API key en <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-success btn-sm" onclick="testApiConnection('openai')">
+                                                        <i class="fas fa-plug me-1"></i>Probar Conexión
+                                                    </button>
+                                                    <button type="button" class="btn btn-primary btn-sm" onclick="saveApiKey('openai')">
+                                                        <i class="fas fa-save me-1"></i>Guardar
+                                                    </button>
+                                                </div>
+                                                <div id="openaiStatus" class="mt-2"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card border-info mb-3">
+                                            <div class="card-header bg-info text-white">
+                                                <h6 class="mb-0"><i class="fas fa-robot me-2"></i>DeepSeek</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label for="deepseekApiKey" class="form-label">API Key</label>
+                                                    <div class="input-group">
+                                                        <input type="password" class="form-control" id="deepseekApiKey" placeholder="sk-...">
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('deepseekApiKey')">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                    <small class="text-muted">Obtén tu API key en <a href="https://platform.deepseek.com/api_keys" target="_blank">DeepSeek Platform</a></small>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-success btn-sm" onclick="testApiConnection('deepseek')">
+                                                        <i class="fas fa-plug me-1"></i>Probar Conexión
+                                                    </button>
+                                                    <button type="button" class="btn btn-primary btn-sm" onclick="saveApiKey('deepseek')">
+                                                        <i class="fas fa-save me-1"></i>Guardar
+                                                    </button>
+                                                </div>
+                                                <div id="deepseekStatus" class="mt-2"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-info-circle me-2"></i>Estado de APIs</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="apiStatusSummary">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="fas fa-brain me-1"></i>OpenAI:</span>
+                                    <span id="openaiStatusBadge" class="badge bg-secondary">No configurado</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span><i class="fas fa-robot me-1"></i>DeepSeek:</span>
+                                    <span id="deepseekStatusBadge" class="badge bg-secondary">No configurado</span>
+                                </div>
+                                <hr>
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="loadApiStatus()">
+                                    <i class="fas fa-sync me-1"></i>Actualizar Estado
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5><i class="fas fa-question-circle me-2"></i>Ayuda</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="small mb-2"><strong>OpenAI:</strong> Ideal para contenido de alta calidad y creatividad.</p>
+                            <p class="small mb-2"><strong>DeepSeek:</strong> Excelente relación calidad-precio para contenido técnico.</p>
+                            <p class="small mb-0"><strong>Tip:</strong> Puedes configurar ambas APIs y elegir cuál usar para cada contenido.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Content Modal -->
+    <div class="modal fade" id="createContentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Crear Nuevo Contenido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- AI Content Generation Section -->
+                    <div class="card mb-4" id="aiGenerationCard">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-robot me-2"></i>Generación de Contenido con IA</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="selectedKeywords" class="form-label">Seleccionar Keywords</label>
+                                        <select class="form-control" id="selectedKeywords" multiple size="4">
+                                            <!-- Keywords will be loaded here -->
+                                        </select>
+                                        <small class="text-muted">Mantén Ctrl/Cmd para seleccionar múltiples keywords</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="aiProvider" class="form-label">Proveedor de IA</label>
+                                        <select class="form-control" id="aiProvider">
+                                            <option value="auto" selected>Automático (Recomendado)</option>
+                                            <option value="openai">OpenAI (GPT)</option>
+                                            <option value="deepseek">DeepSeek</option>
+                                        </select>
+                                        <small class="text-muted">Automático usa DeepSeek si está disponible, sino OpenAI</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="contentType" class="form-label">Tipo de Contenido</label>
+                                        <select class="form-control" id="contentType">
+                                            <option value="article">Artículo</option>
+                                            <option value="blog_post">Post de Blog</option>
+                                            <option value="tutorial">Tutorial</option>
+                                            <option value="review">Reseña</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="generateContentWithAI()">
+                                    <i class="fas fa-magic me-1"></i>Generar Contenido con IA
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="toggleManualMode()">
+                                    <i class="fas fa-edit me-1"></i>Modo Manual
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form id="createContentForm">
+                            <input type="hidden" id="contentId">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="contentTitle" class="form-label">Título *</label>
+                                    <input type="text" class="form-control" id="contentTitle" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentSlug" class="form-label">Slug (URL)</label>
+                                    <input type="text" class="form-control" id="contentSlug" placeholder="Se generará automáticamente">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentExcerpt" class="form-label">Extracto</label>
+                                    <textarea class="form-control" id="contentExcerpt" rows="2" placeholder="Breve descripción del contenido"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentBody" class="form-label">Contenido *</label>
+                                    <div class="content-editor-toolbar mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('h2')" title="Título H2">
+                                            <i class="fas fa-heading"></i> H2
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('h3')" title="Título H3">
+                                            <i class="fas fa-heading"></i> H3
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('strong')" title="Negrita">
+                                            <i class="fas fa-bold"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('em')" title="Cursiva">
+                                            <i class="fas fa-italic"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertList('ul')" title="Lista">
+                                            <i class="fas fa-list-ul"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertList('ol')" title="Lista numerada">
+                                            <i class="fas fa-list-ol"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('blockquote')" title="Cita">
+                                            <i class="fas fa-quote-left"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="triggerImageUpload()" title="Subir imagen">
+                                            <i class="fas fa-image"></i> Imagen
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="formatParagraphs()" title="Formatear párrafos automáticamente">
+                                            <i class="fas fa-paragraph"></i> Auto-P
+                                        </button>
+                                    </div>
+                                    <!-- Hidden file input for image upload -->
+                                    <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                                    <textarea class="form-control content-editor" id="contentBody" rows="12" required placeholder="Escribe tu contenido aquí...&#10;&#10;Tip: Usa saltos de línea dobles para crear párrafos automáticamente, o usa la barra de herramientas para agregar etiquetas HTML semánticas."></textarea>
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle"></i> 
+                                        Usa HTML semántico para mejor SEO. Los saltos de línea dobles se convertirán automáticamente en párrafos &lt;p&gt;.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="contentStatus" class="form-label">Estado</label>
+                                    <select class="form-control" id="contentStatus">
+                                        <option value="draft">Borrador</option>
+                                        <option value="published" selected>Publicado</option>
+                                        <option value="scheduled">Programado</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentCategory" class="form-label">Categoría</label>
+                                    <select class="form-control" id="contentCategory">
+                                        <option value="">Sin categoría</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentTags" class="form-label">Etiquetas</label>
+                                    <input type="text" class="form-control" id="contentTags" placeholder="Separadas por comas">
+                                </div>
+                                <div class="mb-3" id="scheduledDateGroup" style="display: none;">
+                                    <label for="contentScheduledDate" class="form-label">Fecha de publicación</label>
+                                    <input type="datetime-local" class="form-control" id="contentScheduledDate">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentMetaTitle" class="form-label">Meta Título (SEO)</label>
+                                    <input type="text" class="form-control" id="contentMetaTitle" maxlength="60">
+                                    <small class="text-muted">Máximo 60 caracteres</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contentMetaDescription" class="form-label">Meta Descripción (SEO)</label>
+                                    <textarea class="form-control" id="contentMetaDescription" rows="3" maxlength="160" placeholder="Descripción para motores de búsqueda"></textarea>
+                                    <small class="text-muted">Máximo 160 caracteres</small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveContent()">Guardar Contenido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="d-none">
+        <div class="spinner-overlay">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/config.js"></script>
+    <script src="/static/utils.js"></script>
+    <script src="/static/app.js?v=2"></script>
+</body>
+</html>
