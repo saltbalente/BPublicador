@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.api.v1.router import api_router
@@ -374,271 +374,58 @@ def read_root():
     """
     return html_content
 
-@app.get("/inicio/", response_class=HTMLResponse)
-async def home_page():
-    """Página de inicio/home de la web"""
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bienvenido - Mi Blog</title>
-        <meta name="description" content="Bienvenido a nuestro blog. Descubre contenido interesante y de calidad.">
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-            }
-            
-            .header {
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                padding: 1rem 0;
-                box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-            }
-            
-            .nav {
-                max-width: 1200px;
-                margin: 0 auto;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 0 2rem;
-            }
-            
-            .logo {
-                font-size: 1.8rem;
-                font-weight: 700;
-                color: #2c3e50;
-                text-decoration: none;
-            }
-            
-            .nav-links {
-                display: flex;
-                list-style: none;
-                gap: 2rem;
-            }
-            
-            .nav-links a {
-                color: #2c3e50;
-                text-decoration: none;
-                font-weight: 500;
-                transition: color 0.3s ease;
-            }
-            
-            .nav-links a:hover {
-                color: #3498db;
-            }
-            
-            .hero {
-                text-align: center;
-                padding: 6rem 2rem;
-                color: white;
-            }
-            
-            .hero h1 {
-                font-size: 3.5rem;
-                margin-bottom: 1rem;
-                font-weight: 700;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            }
-            
-            .hero p {
-                font-size: 1.3rem;
-                margin-bottom: 2rem;
-                opacity: 0.9;
-                max-width: 600px;
-                margin-left: auto;
-                margin-right: auto;
-            }
-            
-            .cta-button {
-                display: inline-block;
-                background: #3498db;
-                color: white;
-                padding: 1rem 2rem;
-                border-radius: 50px;
-                text-decoration: none;
-                font-weight: 600;
-                font-size: 1.1rem;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
-            }
-            
-            .cta-button:hover {
-                background: #2980b9;
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
-            }
-            
-            .features {
-                background: white;
-                padding: 5rem 2rem;
-            }
-            
-            .container {
-                max-width: 1200px;
-                margin: 0 auto;
-            }
-            
-            .features h2 {
-                text-align: center;
-                font-size: 2.5rem;
-                margin-bottom: 3rem;
-                color: #2c3e50;
-            }
-            
-            .features-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 2rem;
-                margin-top: 3rem;
-            }
-            
-            .feature-card {
-                background: #f8f9fa;
-                padding: 2rem;
-                border-radius: 15px;
-                text-align: center;
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-            
-            .feature-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            }
-            
-            .feature-icon {
-                font-size: 3rem;
-                margin-bottom: 1rem;
-            }
-            
-            .feature-card h3 {
-                font-size: 1.5rem;
-                margin-bottom: 1rem;
-                color: #2c3e50;
-            }
-            
-            .feature-card p {
-                color: #666;
-                line-height: 1.6;
-            }
-            
-            .footer {
-                background: #2c3e50;
-                color: white;
-                text-align: center;
-                padding: 2rem;
-            }
-            
-            .admin-link {
-                position: fixed;
-                bottom: 2rem;
-                right: 2rem;
-                background: #e74c3c;
-                color: white;
-                padding: 1rem;
-                border-radius: 50px;
-                text-decoration: none;
-                font-weight: 600;
-                box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-                transition: all 0.3s ease;
-            }
-            
-            .admin-link:hover {
-                background: #c0392b;
-                transform: translateY(-2px);
-            }
-            
-            @media (max-width: 768px) {
-                .hero h1 {
-                    font-size: 2.5rem;
-                }
-                
-                .hero p {
-                    font-size: 1.1rem;
-                }
-                
-                .nav {
-                    flex-direction: column;
-                    gap: 1rem;
-                }
-                
-                .nav-links {
-                    gap: 1rem;
-                }
-                
-                .features-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <header class="header">
-            <nav class="nav">
-                <a href="/inicio/" class="logo">Mi Blog</a>
-                <ul class="nav-links">
-                    <li><a href="/inicio/">Inicio</a></li>
-                    <li><a href="#sobre-nosotros">Sobre Nosotros</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
-                </ul>
-            </nav>
-        </header>
-        
-        <section class="hero">
-            <div class="container">
-                <h1>Bienvenido a Mi Blog</h1>
-                <p>Descubre contenido de calidad, artículos interesantes y las últimas tendencias en nuestro blog. Un espacio donde compartimos conocimiento y experiencias.</p>
-                <a href="#contenido" class="cta-button">Explorar Contenido</a>
-            </div>
-        </section>
-        
-        <section class="features" id="contenido">
-            <div class="container">
-                <h2>¿Qué Encontrarás Aquí?</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">📝</div>
-                        <h3>Artículos de Calidad</h3>
-                        <p>Contenido original y bien investigado sobre diversos temas de interés, escrito por expertos en cada área.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🎯</div>
-                        <h3>Contenido Especializado</h3>
-                        <p>Artículos enfocados en temas específicos con análisis profundo y perspectivas únicas.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🚀</div>
-                        <h3>Actualizaciones Regulares</h3>
-                        <p>Nuevo contenido publicado regularmente para mantenerte informado sobre las últimas tendencias.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <footer class="footer">
-            <div class="container">
-                <p>&copy; 2024 Mi Blog. Todos los derechos reservados.</p>
-            </div>
-        </footer>
-        
-        <a href="/dashboard" class="admin-link">🔧 Admin</a>
-    </body>
-    </html>
-    """
+def extract_first_image_from_content(content_html: str) -> str:
+    """Extrae la primera imagen del contenido HTML"""
+    import re
     
-    return html_content
+    # Buscar la primera etiqueta img en el contenido
+    img_pattern = r'<img[^>]+src=["\']([^"\'>]+)["\'][^>]*>'
+    match = re.search(img_pattern, content_html, re.IGNORECASE)
+    
+    if match:
+        return match.group(1)
+    return None
+
+@app.get("/inicio/", response_class=HTMLResponse)
+async def home_page(request: Request, db: Session = Depends(get_db)):
+    """Página de inicio esotérica con artículos recientes"""
+    from app.models.category import Category
+    
+    # Obtener los 6 artículos más recientes publicados
+    recent_articles = db.query(Content).filter(
+        Content.status == "published"
+    ).order_by(Content.created_at.desc()).limit(6).all()
+    
+    # Procesar artículos para agregar imagen de respaldo
+    for article in recent_articles:
+        if not article.featured_image_url:
+            # Si no tiene imagen destacada, extraer la primera del contenido
+            first_image = extract_first_image_from_content(article.content or "")
+            if first_image:
+                article.featured_image = first_image
+            else:
+                article.featured_image = None
+        else:
+            article.featured_image = article.featured_image_url
+    
+    # Obtener categorías para el menú de navegación
+    categories = db.query(Category).limit(10).all()
+    
+    return templates.TemplateResponse("home.html", {
+        "request": request,
+        "articles": recent_articles,
+        "categories": categories,
+        "base_url": "",
+        "current_page": "home",
+        "page_title": "Inicio - Autopublicador Web",
+        "meta_description": "Descubre contenido esotérico y espiritual. Explora artículos sobre tarot, astrología, meditación y crecimiento personal."
+    })
+
+
+@app.get("/", response_class=HTMLResponse)
+async def landing_page():
+    """Página de aterrizaje principal"""
+    return RedirectResponse(url="/inicio/", status_code=302)
 
 @app.get("/content/{slug}", response_class=HTMLResponse, response_model=None)
 async def get_public_content(slug: str, request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
