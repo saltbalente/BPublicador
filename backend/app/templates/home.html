@@ -6,25 +6,72 @@
 <style>
     /* Esoteric Home Page Styles - Apple-inspired minimalism */
     :root {
-        --mystic-purple: #6B46C1;
-        --mystic-indigo: #4C1D95;
+        {% if visual_config.theme == 'dark' %}
+        --primary-color: #e2e8f0;
+        --secondary-color: #4a5568;
+        --background-color: #1a202c;
+        --card-background: #2d3748;
+        --text-color: #e2e8f0;
+        --text-muted: #a0aec0;
+        --border-color: #4a5568;
+        --gradient-primary: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        --gradient-secondary: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        {% elif visual_config.theme == 'mystic' %}
+        --primary-color: #d4af37;
+        --secondary-color: #b8860b;
+        --background-color: #1a1a1a;
+        --card-background: #1a1a1a;
+        --text-color: #d4af37;
+        --text-muted: #b8860b;
+        --border-color: #d4af37;
+        --gradient-primary: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+        --gradient-secondary: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        {% elif visual_config.theme == 'esoteric' %}
+        --primary-color: #9f7aea;
+        --secondary-color: #805ad5;
+        --background-color: #2d1b69;
+        --card-background: #2d1b69;
+        --text-color: #e9d8fd;
+        --text-muted: #c6b2ff;
+        --border-color: #9f7aea;
+        --gradient-primary: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+        --gradient-secondary: linear-gradient(135deg, #2d1b69 0%, #553c9a 100%);
+        {% else %}
+        --primary-color: #6B46C1;
+        --secondary-color: #4C1D95;
+        --background-color: #F9FAFB;
+        --card-background: #ffffff;
+        --text-color: #1F2937;
+        --text-muted: #6B7280;
+        --border-color: #E5E7EB;
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #4C1D95 0%, #6B46C1 50%, #8B5CF6 100%);
+        {% endif %}
+        
+        /* Legacy variables for compatibility */
+        --mystic-purple: var(--primary-color);
+        --mystic-indigo: var(--secondary-color);
         --mystic-gold: #F59E0B;
-        --mystic-silver: #E5E7EB;
-        --mystic-dark: #1F2937;
-        --mystic-light: #F9FAFB;
-        --gradient-mystic: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --gradient-cosmic: linear-gradient(135deg, #4C1D95 0%, #6B46C1 50%, #8B5CF6 100%);
+        --mystic-silver: var(--border-color);
+        --mystic-dark: var(--text-color);
+        --mystic-light: var(--background-color);
+        --gradient-mystic: var(--gradient-primary);
+        --gradient-cosmic: var(--gradient-secondary);
     }
     
     .home-page {
-        background: var(--mystic-light);
-        color: var(--mystic-dark);
+        background: var(--background-color);
+        color: var(--text-color);
     }
     
     /* Hero Section */
     .hero-section {
-        background: var(--gradient-cosmic);
+        background: var(--gradient-secondary);
+        {% if visual_config.theme in ['dark', 'mystic', 'esoteric'] %}
+        color: var(--text-color);
+        {% else %}
         color: white;
+        {% endif %}
         padding: 8rem 0 6rem;
         text-align: center;
         position: relative;
@@ -91,7 +138,7 @@
     /* Articles Section */
     .articles-section {
         padding: 6rem 0;
-        background: white;
+        background: var(--background-color);
     }
     
     .section-header {
@@ -102,14 +149,14 @@
     .section-title {
         font-size: 2.5rem;
         font-weight: 300;
-        color: var(--mystic-dark);
+        color: var(--text-color);
         margin-bottom: 1rem;
         letter-spacing: -0.01em;
     }
     
     .section-subtitle {
         font-size: 1.2rem;
-        color: #6B7280;
+        color: var(--text-muted);
         font-weight: 300;
         max-width: 600px;
         margin: 0 auto;
@@ -127,18 +174,26 @@
     }
     
     .article-card {
-        background: white;
+        background: var(--card-background);
         border-radius: 20px;
         overflow: hidden;
+        {% if visual_config.theme in ['dark', 'mystic', 'esoteric'] %}
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        {% else %}
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        {% endif %}
         transition: all 0.4s ease;
-        border: 1px solid rgba(107, 70, 193, 0.1);
+        border: 1px solid var(--border-color);
     }
     
     .article-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(107, 70, 193, 0.15);
-        border-color: rgba(107, 70, 193, 0.2);
+        {% if visual_config.theme in ['dark', 'mystic', 'esoteric'] %}
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        {% else %}
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        {% endif %}
+        border-color: var(--primary-color);
     }
     
     .article-image {
@@ -164,9 +219,7 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        background: var(--gradient-cosmic);
-        color: white;
-        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.7);
     }
     
     .article-content {
@@ -179,16 +232,10 @@
         gap: 1rem;
         margin-bottom: 1rem;
         font-size: 0.875rem;
-        color: #6B7280;
+        color: var(--text-muted);
     }
     
-    .article-date {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .article-reading-time {
+    .article-meta > div {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -197,7 +244,7 @@
     .article-title {
         font-size: 1.5rem;
         font-weight: 600;
-        color: var(--mystic-dark);
+        color: var(--text-color);
         margin-bottom: 1rem;
         line-height: 1.3;
         display: -webkit-box;
@@ -207,7 +254,7 @@
     }
     
     .article-excerpt {
-        color: #6B7280;
+        color: var(--text-muted);
         line-height: 1.6;
         margin-bottom: 2rem;
         display: -webkit-box;
@@ -220,19 +267,23 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--mystic-purple);
+        color: var(--primary-color);
         text-decoration: none;
         font-weight: 500;
         transition: all 0.3s ease;
         padding: 0.75rem 1.5rem;
-        border: 1px solid var(--mystic-purple);
+        border: 1px solid var(--primary-color);
         border-radius: 50px;
         background: transparent;
     }
     
     .article-cta:hover {
-        background: var(--mystic-purple);
+        background: var(--primary-color);
+        {% if visual_config.theme == 'mystic' %}
+        color: var(--background-color);
+        {% else %}
         color: white;
+        {% endif %}
         transform: translateX(4px);
     }
     
@@ -240,7 +291,7 @@
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        color: #6B7280;
+        color: var(--text-muted);
     }
     
     .empty-state-icon {
@@ -253,7 +304,7 @@
         font-size: 1.5rem;
         font-weight: 500;
         margin-bottom: 0.5rem;
-        color: var(--mystic-dark);
+        color: var(--text-color);
     }
     
     .empty-state-text {
@@ -315,6 +366,82 @@
             font-size: 1.25rem;
         }
     }
+    
+    /* Configuration-based visibility */
+    {% if not visual_config.showDates %}
+    .article-date {
+        display: none !important;
+    }
+    {% endif %}
+    
+    {% if not visual_config.showCategories %}
+    .article-category {
+        display: none !important;
+    }
+    {% endif %}
+    
+    {% if not visual_config.showExcerpts %}
+    .article-excerpt {
+        display: none !important;
+    }
+    {% endif %}
+    
+    /* Layout-specific styles */
+    {% if visual_config.layout == 'list' %}
+    .articles-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .article-card {
+        display: flex;
+        flex-direction: row;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .article-image {
+        width: 300px;
+        height: 200px;
+        flex-shrink: 0;
+    }
+    
+    .article-content {
+        flex: 1;
+    }
+    {% elif visual_config.layout == 'masonry' %}
+    .articles-grid {
+        columns: 3;
+        column-gap: 2rem;
+    }
+    
+    .article-card {
+        break-inside: avoid;
+        margin-bottom: 2rem;
+    }
+    {% elif visual_config.layout == 'featured' %}
+    .articles-grid .article-card:first-child {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: row;
+        max-height: 400px;
+    }
+    
+    .articles-grid .article-card:first-child .article-image {
+        width: 50%;
+        height: 400px;
+    }
+    
+    .articles-grid .article-card:first-child .article-content {
+        flex: 1;
+        padding: 3rem;
+    }
+    
+    .articles-grid .article-card:first-child .article-title {
+        font-size: 2rem;
+    }
+    {% endif %}
 </style>
 {% endblock %}
 
@@ -374,6 +501,15 @@
                         </svg>
                         {{ article.published_at|format_date if article.published_at else article.created_at|format_date }}
                     </div>
+                    {% if article.category %}
+                    <div class="article-category">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                        </svg>
+                        {{ article.category.name }}
+                    </div>
+                    {% endif %}
                     <div class="article-reading-time">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>

@@ -390,11 +390,15 @@ def extract_first_image_from_content(content_html: str) -> str:
 async def home_page(request: Request, db: Session = Depends(get_db)):
     """Página de inicio esotérica con artículos recientes"""
     from app.models.category import Category
+    from app.api.v1.visual_config import load_config
     
-    # Obtener los 6 artículos más recientes publicados
+    # Cargar configuración visual
+    visual_config = load_config()
+    
+    # Obtener artículos según la configuración
     recent_articles = db.query(Content).filter(
         Content.status == "published"
-    ).order_by(Content.created_at.desc()).limit(6).all()
+    ).order_by(Content.created_at.desc()).limit(visual_config.articlesCount).all()
     
     # Procesar artículos para agregar imagen de respaldo
     for article in recent_articles:
@@ -418,7 +422,8 @@ async def home_page(request: Request, db: Session = Depends(get_db)):
         "base_url": "",
         "current_page": "home",
         "page_title": "Inicio - Autopublicador Web",
-        "meta_description": "Descubre contenido esotérico y espiritual. Explora artículos sobre tarot, astrología, meditación y crecimiento personal."
+        "meta_description": "Descubre contenido esotérico y espiritual. Explora artículos sobre tarot, astrología, meditación y crecimiento personal.",
+        "visual_config": visual_config
     })
 
 

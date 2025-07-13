@@ -39,6 +39,121 @@
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
         }
+        
+        /* Estilos para el configurador visual */
+        .theme-preview {
+            border: 2px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+        
+        .preview-card {
+            border-radius: 0.375rem;
+            overflow: hidden;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+        }
+        
+        .preview-header {
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .preview-content {
+            padding: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .preview-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 0.25rem;
+            flex-shrink: 0;
+        }
+        
+        .preview-text h6 {
+            margin: 0 0 0.25rem 0;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .preview-text p {
+            margin: 0;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        /* Temas */
+        .theme-light .preview-card {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+        }
+        .theme-light .preview-header {
+            background: #f8f9fa;
+            color: #495057;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .theme-light .preview-content {
+            background: #ffffff;
+            color: #212529;
+        }
+        .theme-light .preview-image {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .theme-dark .preview-card {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+        }
+        .theme-dark .preview-header {
+            background: #1a202c;
+            color: #e2e8f0;
+            border-bottom: 1px solid #4a5568;
+        }
+        .theme-dark .preview-content {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+        .theme-dark .preview-image {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        }
+        
+        .theme-mystic .preview-card {
+            background: #1a1a1a;
+            border: 1px solid #d4af37;
+        }
+        .theme-mystic .preview-header {
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+            color: #1a1a1a;
+            border-bottom: 1px solid #d4af37;
+        }
+        .theme-mystic .preview-content {
+            background: #1a1a1a;
+            color: #d4af37;
+        }
+        .theme-mystic .preview-image {
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+        }
+        
+        .theme-esoteric .preview-card {
+            background: #2d1b69;
+            border: 1px solid #9f7aea;
+        }
+        .theme-esoteric .preview-header {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+            color: #ffffff;
+            border-bottom: 1px solid #9f7aea;
+        }
+        .theme-esoteric .preview-content {
+            background: #2d1b69;
+            color: #e9d8fd;
+        }
+        .theme-esoteric .preview-image {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+        }
     </style>
 </head>
 <body>
@@ -227,6 +342,132 @@
                                 </div>
                                 <div class="align-self-center">
                                     <i class="fas fa-clock fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configurador Visual de Estilos -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-palette me-2"></i>Configurador Visual de la Página de Inicio</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Selector de Tema -->
+                                <div class="col-md-6">
+                                    <div class="card border-info mb-3">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="fas fa-paint-brush me-2"></i>Tema Visual</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="themeSelector" class="form-label">Seleccionar Tema</label>
+                                                <select class="form-select" id="themeSelector" onchange="changeTheme(this.value)">
+                                                    <option value="light">Claro - Minimalista</option>
+                                                    <option value="dark">Oscuro - Elegante</option>
+                                                    <option value="mystic">Místico - Dorados y Oscuros</option>
+                                                    <option value="esoteric">Esotérico - Púrpuras y Violetas</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Vista previa del tema -->
+                                            <div class="theme-preview mb-3" id="themePreview">
+                                                <div class="preview-card" id="previewCard">
+                                                    <div class="preview-header">Ejemplo de Artículo</div>
+                                                    <div class="preview-content">
+                                                        <div class="preview-image"></div>
+                                                        <div class="preview-text">
+                                                            <h6>Título del Artículo</h6>
+                                                            <p>Extracto del contenido...</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-primary btn-sm" onclick="saveVisualConfig()">
+                                                    <i class="fas fa-check me-1"></i>Aplicar Tema
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetTheme()">
+                                                    <i class="fas fa-undo me-1"></i>Restablecer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Configuración de Artículos -->
+                                <div class="col-md-6">
+                                    <div class="card border-success mb-3">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0"><i class="fas fa-newspaper me-2"></i>Configuración de Artículos</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="articlesCount" class="form-label">Número de Artículos a Mostrar</label>
+                                                <div class="input-group">
+                                                    <input type="range" class="form-range" id="articlesCount" min="3" max="12" value="6" oninput="updateArticlesCount()">
+                                                    <span class="input-group-text" id="articlesCountValue">6</span>
+                                                </div>
+                                                <small class="text-muted">Controla cuántos artículos se muestran en la página de inicio</small>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="articlesLayout" class="form-label">Diseño de Artículos</label>
+                                                <select class="form-select" id="layoutSelect" onchange="updateLayout()">
+                                                    <option value="grid">Cuadrícula (Grid)</option>
+                                                    <option value="list">Lista Vertical</option>
+                                                    <option value="masonry">Mosaico (Masonry)</option>
+                                                    <option value="cards">Tarjetas Destacadas</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="showExcerpts" checked onchange="updateDisplayOptions()">
+                                                    <label class="form-check-label" for="showExcerpts">
+                                                        Mostrar extractos de artículos
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="showDates" checked onchange="updateDisplayOptions()">
+                                                    <label class="form-check-label" for="showDates">
+                                                        Mostrar fechas de publicación
+                                                    </label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="showCategories" checked onchange="updateDisplayOptions()">
+                                                    <label class="form-check-label" for="showCategories">
+                                                        Mostrar categorías
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-success btn-sm" onclick="saveVisualConfig()">
+                                                    <i class="fas fa-save me-1"></i>Guardar Configuración
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="previewHomepage()">
+                                                    <i class="fas fa-eye me-1"></i>Vista Previa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Estado de la Configuración -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info" id="configStatus" style="display: none;">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <span id="configStatusText">Configuración guardada exitosamente</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1040,5 +1281,186 @@
     <script src="/frontend/config.js"></script>
 <script src="/frontend/utils.js"></script>
 <script src="/frontend/app.js?v=2"></script>
+
+<script>
+// Configurador Visual
+let currentTheme = 'light';
+let currentConfig = {
+    theme: 'light',
+    articlesCount: 6,
+    layout: 'grid',
+    showExcerpts: true,
+    showDates: true,
+    showCategories: true
+};
+
+// Cargar configuración guardada al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    loadVisualConfig();
+});
+
+function changeTheme(theme) {
+    currentTheme = theme;
+    currentConfig.theme = theme;
+    
+    // Actualizar selector
+    const themeSelector = document.getElementById('themeSelector');
+    if (themeSelector) {
+        themeSelector.value = theme;
+    }
+    
+    // Actualizar vista previa
+    updateThemePreview(theme);
+}
+
+// Función para aplicar tema (alias de saveVisualConfig)
+function applyTheme() {
+    saveVisualConfig();
+}
+
+// Función para vista previa de tema
+function previewTheme() {
+    const themeSelector = document.getElementById('themeSelector');
+    if (themeSelector) {
+        changeTheme(themeSelector.value);
+    }
+}
+
+// Función para vista previa de layout
+function previewLayout() {
+    updateLayout();
+}
+
+// Función alias para compatibilidad
+function saveHomepageConfig() {
+    saveVisualConfig();
+}
+
+function updateThemePreview(theme) {
+    const preview = document.getElementById('themePreview');
+    if (!preview) return;
+    
+    // Remover clases de tema anteriores
+    preview.className = 'theme-preview';
+    
+    // Agregar nueva clase de tema
+    preview.classList.add(`theme-${theme}`);
+    
+    // Actualizar contenido de la vista previa
+    const themeNames = {
+        'light': 'Tema Claro',
+        'dark': 'Tema Oscuro', 
+        'mystic': 'Tema Místico',
+        'esoteric': 'Tema Esotérico'
+    };
+    
+    preview.innerHTML = `
+        <div class="preview-card">
+            <div class="preview-header">
+                ${themeNames[theme] || 'Tema Personalizado'}
+            </div>
+            <div class="preview-content">
+                <div class="preview-image"></div>
+                <div class="preview-text">
+                    <h6>Título del Artículo</h6>
+                    <p>Vista previa del contenido con el tema seleccionado...</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateArticlesCount() {
+    const count = document.getElementById('articlesCount').value;
+    currentConfig.articlesCount = parseInt(count);
+    document.getElementById('articlesCountValue').textContent = count;
+}
+
+function updateLayout() {
+    const layout = document.getElementById('layoutSelect').value;
+    currentConfig.layout = layout;
+}
+
+function updateDisplayOptions() {
+    currentConfig.showExcerpts = document.getElementById('showExcerpts').checked;
+    currentConfig.showDates = document.getElementById('showDates').checked;
+    currentConfig.showCategories = document.getElementById('showCategories').checked;
+}
+
+async function saveVisualConfig() {
+    try {
+        // Actualizar configuración con valores actuales
+        updateArticlesCount();
+        updateLayout();
+        updateDisplayOptions();
+        
+        const response = await fetch('/api/v1/visual-config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(currentConfig)
+        });
+        
+        if (response.ok) {
+            showConfigStatus('Configuración visual guardada exitosamente', 'success');
+        } else {
+            throw new Error('Error al guardar la configuración');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showConfigStatus('Error al guardar la configuración visual', 'error');
+    }
+}
+
+async function loadVisualConfig() {
+    try {
+        const response = await fetch('/api/v1/visual-config');
+        if (response.ok) {
+            const config = await response.json();
+            currentConfig = { ...currentConfig, ...config };
+            
+            // Aplicar configuración cargada
+            changeTheme(currentConfig.theme);
+            document.getElementById('articlesCount').value = currentConfig.articlesCount;
+            document.getElementById('articlesCountValue').textContent = currentConfig.articlesCount;
+            document.getElementById('layoutSelect').value = currentConfig.layout;
+            document.getElementById('showExcerpts').checked = currentConfig.showExcerpts;
+            document.getElementById('showDates').checked = currentConfig.showDates;
+            document.getElementById('showCategories').checked = currentConfig.showCategories;
+        }
+    } catch (error) {
+        console.error('Error al cargar configuración:', error);
+    }
+}
+
+function previewHomepage() {
+    // Abrir la página de inicio en una nueva pestaña para ver los cambios
+    window.open('/inicio/', '_blank');
+}
+
+function showConfigStatus(message, type) {
+    const statusDiv = document.getElementById('configStatus');
+    const statusText = document.getElementById('configStatusText');
+    
+    if (statusDiv && statusText) {
+        statusText.textContent = message;
+        statusDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        statusDiv.style.display = 'block';
+        
+        // Ocultar después de 3 segundos
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// Inicializar vista previa al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        updateThemePreview(currentTheme);
+    }, 100);
+});
+</script>
 </body>
 </html>
