@@ -4,8 +4,8 @@ watchPatterns = ["backend/**"]
 
 [deploy]
 startCommand = "/app/start.sh"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckPath = "/ping"
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
 

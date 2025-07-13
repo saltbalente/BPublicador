@@ -479,13 +479,24 @@ async def get_public_content(slug: str, request: Request, db: Session = Depends(
 @app.get("/health")
 async def health_check():
     """Endpoint de health check para Docker y monitoreo"""
-    return JSONResponse(
-        status_code=200,
-        content={
+    try:
+        return {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
             "version": "1.0.0",
-            "environment": settings.ENVIRONMENT,
-            "uptime": time.time()
+            "service": "autopublicador-api"
         }
-    )
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        )
+
+@app.get("/ping")
+async def ping():
+    """Endpoint simple de ping para verificar que la app está viva"""
+    return {"message": "pong"}
