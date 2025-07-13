@@ -130,6 +130,132 @@ app.include_router(api_router, prefix="/api/v1")
 from app.api.v1.publication import router as publication_router
 app.include_router(publication_router, prefix="/site", tags=["sitio-público"])
 
+# Ruta para mostrar todas las categorías
+@app.get("/categoria/", response_class=HTMLResponse)
+async def categorias_list(request: Request, db: Session = Depends(get_db)):
+    """Página que muestra todas las categorías con artículos recientes"""
+    from app.models.category import Category
+    from app.models.content import Content
+    
+    try:
+        # Obtener todas las categorías
+        categories = db.query(Category).all()
+        
+        # Para cada categoría, obtener 3 artículos recientes
+        categories_with_posts = []
+        for category in categories:
+            recent_posts = db.query(Content).filter(
+                Content.category_id == category.id,
+                Content.status == "published"
+            ).order_by(Content.created_at.desc()).limit(3).all()
+            
+            categories_with_posts.append({
+                "category": category,
+                "recent_posts": recent_posts,
+                "total_posts": db.query(Content).filter(
+                    Content.category_id == category.id,
+                    Content.status == "published"
+                ).count()
+            })
+        
+        context = {
+            "request": request,
+            "categories_with_posts": categories_with_posts,
+            "categories": categories,  # Agregar categories para base.html
+            "base_url": str(request.base_url).rstrip('/'),
+            "canonical_url": f"{str(request.base_url).rstrip('/')}/categoria/",
+            "page_title": "Todas las Categorías",
+            "page_description": "Explora todas nuestras categorías y descubre contenido interesante"
+        }
+        
+        return templates.TemplateResponse("categories.html", context)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error cargando categorías: {str(e)}")
+
+# Ruta para categorías en español
+@app.get("/categoria/{slug}", response_class=HTMLResponse)
+async def categoria_detail(slug: str, request: Request, db: Session = Depends(get_db), page: int = 1):
+    """Página de categoría en español"""
+    from app.models.category import Category
+    from app.models.content import Content
+    
+    try:
+        # Buscar la categoría por slug
+        category = db.query(Category).filter(Category.slug == slug).first()
+        
+        if not category:
+            raise HTTPException(status_code=404, detail="Categoría no encontrada")
+        
+        # Paginación
+        per_page = 12
+        offset = (page - 1) * per_page
+        
+        # Posts de la categoría
+        posts_query = db.query(Content).filter(
+            Content.category_id == category.id,
+            Content.status == "published"
+        )
+        
+        total_posts = posts_query.count()
+        posts = posts_query.order_by(Content.created_at.desc()).offset(offset).limit(per_page).all()
+        
+        # Calcular paginación
+        total_pages = (total_posts + per_page - 1) // per_page
+        has_prev = page > 1
+        has_next = page < total_pages
+        
+        # Categorías relacionadas
+        related_categories = db.query(Category).filter(
+            Category.id != category.id
+        ).limit(6).all()
+        
+        # Crear objeto de paginación compatible con la plantilla
+        class Pagination:
+            def __init__(self, page, total_pages, has_prev, has_next, total_posts):
+                self.page = page
+                self.pages = total_pages
+                self.has_prev = has_prev
+                self.has_next = has_next
+                self.prev_num = page - 1 if has_prev else None
+                self.next_num = page + 1 if has_next else None
+                self.total = total_posts
+            
+            def iter_pages(self, left_edge=2, left_current=2, right_current=3, right_edge=2):
+                """Generar números de página para la paginación"""
+                last = self.pages
+                for num in range(1, last + 1):
+                    if num <= left_edge or \
+                       (self.page - left_current - 1 < num < self.page + right_current) or \
+                       num > last - right_edge:
+                        yield num
+        
+        pagination = Pagination(page, total_pages, has_prev, has_next, total_posts)
+        
+        context = {
+            "request": request,
+            "category": category,
+            "posts": posts,
+            "categories": related_categories,  # La plantilla espera 'categories'
+            "current_page": page,
+            "total_pages": total_pages,
+            "has_prev": has_prev,
+            "has_next": has_next,
+            "prev_page": page - 1 if has_prev else None,
+            "next_page": page + 1 if has_next else None,
+            "total_posts": total_posts,
+            "base_url": str(request.base_url).rstrip('/'),
+            "canonical_url": f"{str(request.base_url).rstrip('/')}/categoria/{slug}",
+            "pagination": pagination
+        }
+        
+        return templates.TemplateResponse("category.html", context)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error renderizando categoría: {str(e)}")
+
 @app.get("/dashboard")
 def dashboard():
     """Servir el dashboard del frontend"""

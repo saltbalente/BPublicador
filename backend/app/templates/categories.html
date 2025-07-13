@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} - Autopublicador Web{% endblock %}
+
+{% block meta_description %}{{ page_description }}{% endblock %}
+
+{% block og_title %}{{ page_title }}{% endblock %}
+
+{% block og_description %}{{ page_description }}{% endblock %}
+
+{% block og_url %}{{ canonical_url }}{% endblock %}
+
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
+
+{% block body_class %}categories-page{% endblock %}
+
+{% block main_class %}main-content{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="header-content">
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ base_url }}/">Inicio</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Categorías</li>
+                </ol>
+            </nav>
+            
+            <h1 class="page-title">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" class="title-icon">
+                    <path d="M10 4H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm10 9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zM10 13H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zm10-9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2z"/>
+                </svg>
+                {{ page_title }}
+            </h1>
+            
+            <p class="page-description">{{ page_description }}</p>
+            
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <span class="stat-number">{{ categories_with_posts|length }}</span>
+                    <span class="stat-label">Categorías</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ categories_with_posts|sum(attribute='total_posts') }}</span>
+                    <span class="stat-label">Artículos</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Categories Grid -->
+    <main class="categories-content">
+        {% if categories_with_posts %}
+        <div class="categories-grid">
+            {% for item in categories_with_posts %}
+            <article class="category-card">
+                <div class="category-header">
+                    <div class="category-info">
+                        <h2 class="category-title">
+                            <a href="{{ base_url }}/categoria/{{ item.category.slug }}" class="category-link">
+                                {{ item.category.name }}
+                            </a>
+                        </h2>
+                        
+                        {% if item.category.description %}
+                        <p class="category-description">{{ item.category.description }}</p>
+                        {% endif %}
+                        
+                        <div class="category-stats">
+                            <span class="posts-count">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/>
+                                </svg>
+                                {{ item.total_posts }} artículo{{ 's' if item.total_posts != 1 else '' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="category-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 4H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm10 9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zM10 13H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zm10-9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                {% if item.recent_posts %}
+                <div class="recent-posts">
+                    <h3 class="recent-posts-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z"/>
+                        </svg>
+                        Artículos Recientes
+                    </h3>
+                    
+                    <div class="posts-list">
+                        {% for post in item.recent_posts %}
+                        <article class="post-item">
+                            <div class="post-content">
+                                <h4 class="post-title">
+                                    <a href="{{ base_url }}/content/{{ post.slug }}" class="post-link">
+                                        {{ post.title|truncate_words(8) }}
+                                    </a>
+                                </h4>
+                                
+                                <div class="post-meta">
+                                    <time datetime="{{ post.created_at.isoformat() }}" class="post-date">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                                        </svg>
+                                        {{ post.created_at|format_date }}
+                                    </time>
+                                    
+                                    <span class="reading-time">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z"/>
+                                        </svg>
+                                        {{ post.content|reading_time }} min
+                                    </span>
+                                </div>
+                                
+                                {% if post.excerpt %}
+                                <p class="post-excerpt">{{ post.excerpt|truncate_words(15) }}</p>
+                                {% endif %}
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-posts">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" class="no-posts-icon">
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/>
+                    </svg>
+                    <p class="no-posts-text">Aún no hay artículos en esta categoría</p>
+                </div>
+                {% endif %}
+                
+                <div class="category-footer">
+                    <a href="{{ base_url }}/categoria/{{ item.category.slug }}" class="view-all-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                        </svg>
+                        Ver todos los artículos
+                        {% if item.total_posts > 0 %}
+                        <span class="btn-count">({{ item.total_posts }})</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-content">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="empty-icon">
+                    <path d="M10 4H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm10 9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zM10 13H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zm10-9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2z"/>
+                </svg>
+                <h2 class="empty-title">No hay categorías disponibles</h2>
+                <p class="empty-description">Aún no se han creado categorías en el sitio.</p>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Layout */
+    .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+    
+    /* Page Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .header-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .breadcrumb-nav {
+        margin-bottom: 1.5rem;
+    }
+    
+    .breadcrumb {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    .breadcrumb-item {
+        color: #6c757d;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        margin: 0 0.5rem;
+        color: #dee2e6;
+    }
+    
+    .breadcrumb-item a {
+        color: #007bff;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+    
+    .page-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .title-icon {
+        color: #007bff;
+    }
+    
+    .page-description {
+        font-size: 1.2rem;
+        color: #6c757d;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+    
+    .stats-summary {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        margin-top: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #007bff;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Categories Grid */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+    
+    .category-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .category-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    
+    .category-info {
+        flex: 1;
+    }
+    
+    .category-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .category-link {
+        color: #2c3e50;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .category-link:hover {
+        color: #007bff;
+    }
+    
+    .category-description {
+        color: #6c757d;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    
+    .category-stats {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .posts-count {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .category-icon {
+        color: #007bff;
+        opacity: 0.7;
+    }
+    
+    /* Recent Posts */
+    .recent-posts {
+        padding: 1.5rem;
+    }
+    
+    .recent-posts-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+    
+    .posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .post-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        border-left: 3px solid #007bff;
+        transition: background-color 0.2s;
+    }
+    
+    .post-item:hover {
+        background: #e9ecef;
+    }
+    
+    .post-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.3;
+    }
+    
+    .post-link {
+        color: #2c3e50;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    
+    .post-link:hover {
+        color: #007bff;
+    }
+    
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+    
+    .post-date,
+    .reading-time {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .post-excerpt {
+        font-size: 0.9rem;
+        color: #6c757d;
+        line-height: 1.4;
+        margin: 0;
+    }
+    
+    /* No Posts State */
+    .no-posts {
+        text-align: center;
+        padding: 2rem 1.5rem;
+        color: #6c757d;
+    }
+    
+    .no-posts-icon {
+        opacity: 0.5;
+        margin-bottom: 1rem;
+    }
+    
+    .no-posts-text {
+        margin: 0;
+        font-style: italic;
+    }
+    
+    /* Category Footer */
+    .category-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .view-all-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    
+    .view-all-btn:hover {
+        background: #0056b3;
+        color: white;
+    }
+    
+    .btn-count {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-content {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .empty-icon {
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-title {
+        font-size: 1.5rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-description {
+        color: #6c757d;
+        line-height: 1.6;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-container {
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+        }
+        
+        .stats-summary {
+            gap: 2rem;
+        }
+        
+        .categories-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .category-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .post-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .page-title {
+            font-size: 1.5rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .stats-summary {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .category-header {
+            padding: 1rem;
+        }
+        
+        .recent-posts {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

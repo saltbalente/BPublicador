@@ -286,68 +286,7 @@
                     <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
                 </div>
             </div>
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card bg-primary text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 id="totalKeywords">0</h4>
-                                    <p class="mb-0">Keywords</p>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-key fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 id="totalContent">0</h4>
-                                    <p class="mb-0">Contenido</p>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-file-alt fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 id="totalImages">0</h4>
-                                    <p class="mb-0">Imágenes</p>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-images fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 id="scheduledTasks">0</h4>
-                                    <p class="mb-0">Tareas Programadas</p>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-clock fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
             
             <!-- Configurador Visual de Estilos -->
             <div class="row mt-4">
@@ -1224,9 +1163,11 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="contentCategory" class="form-label">Categoría</label>
-                                    <select class="form-control" id="contentCategory">
-                                        <option value="">Sin categoría</option>
-                                    </select>
+                                    <input type="text" class="form-control" id="contentCategory" list="categoryOptions" placeholder="Escribe o selecciona una categoría">
+                                    <datalist id="categoryOptions">
+                                        <!-- Las categorías se cargarán dinámicamente -->
+                                    </datalist>
+                                    <small class="text-muted">Puedes escribir una nueva categoría o seleccionar una existente</small>
                                 </div>
                                 <div class="mb-3">
                                     <label for="templateTheme" class="form-label">Tema Visual</label>

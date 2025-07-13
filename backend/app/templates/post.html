@@ -20,7 +20,7 @@
                             <li class="breadcrumb-item"><a href="{{ base_url }}/">Inicio</a></li>
                             {% if category %}
                             <li class="breadcrumb-item">
-                                <a href="{{ base_url }}/categories/{{ category.slug }}">{{ category.name }}</a>
+                                <a href="{{ base_url }}/categoria/{{ category.slug }}">{{ category.name }}</a>
                             </li>
                             {% endif %}
                             <li class="breadcrumb-item active" aria-current="page">
@@ -32,7 +32,7 @@
                     <!-- Category Badge -->
                     {% if category %}
                     <div class="category-badge-container">
-                        <a href="{{ base_url }}/categories/{{ category.slug }}" class="category-badge">
+                        <a href="{{ base_url }}/categoria/{{ category.slug }}" class="category-badge">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M10 4H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm10 9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zM10 13H4c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2v-6c0-1.11-.89-2-2-2zm10-9h-6c-1.11 0-2 .89-2 2v6c0 1.11.89 2 2 2h6c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2z"/>
                             </svg>
@@ -359,14 +359,14 @@
                         </div>
                         <div class="widget-body">
                             <h6 class="category-name">
-                                <a href="{{ base_url }}/categories/{{ category.slug }}" class="category-link">
+                                <a href="{{ base_url }}/categoria/{{ category.slug }}" class="category-link">
                                     {{ category.name }}
                                 </a>
                             </h6>
                             {% if category.description %}
                             <p class="category-description">{{ category.description }}</p>
                             {% endif %}
-                            <a href="{{ base_url }}/categories/{{ category.slug }}" class="widget-btn">
+                            <a href="{{ base_url }}/categoria/{{ category.slug }}" class="widget-btn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
                                 </svg>

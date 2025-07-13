@@ -240,10 +240,8 @@ async function loadDashboardData() {
 }
 
 function updateDashboardStats(stats) {
-    document.getElementById('totalKeywords').textContent = stats.total_keywords || 0;
-    document.getElementById('totalContent').textContent = stats.total_content || 0;
-    document.getElementById('totalImages').textContent = stats.total_images || 0;
-    document.getElementById('scheduledTasks').textContent = stats.scheduled_tasks || 0;
+    // Dashboard stats cards removed - only visual configuration remains
+    console.log('Dashboard stats loaded:', stats);
 }
 
 // Keywords Functions
@@ -1182,14 +1180,14 @@ async function loadCategoriesForForm() {
         const response = await apiRequest('/categories/');
         if (response) {
             categories = response;
-            const categorySelect = document.getElementById('contentCategory');
-            categorySelect.innerHTML = '<option value="">Sin categoría</option>';
+            const categoryDatalist = document.getElementById('categoryOptions');
+            categoryDatalist.innerHTML = '';
             
             categories.forEach(category => {
                 const option = document.createElement('option');
-                option.value = category.id;
-                option.textContent = category.name;
-                categorySelect.appendChild(option);
+                option.value = category.name;
+                option.setAttribute('data-id', category.id);
+                categoryDatalist.appendChild(option);
             });
         }
     } catch (error) {
@@ -1388,13 +1386,28 @@ async function saveContent() {
     showLoading(true);
     
     try {
+        // Handle category - can be existing or new
+        const categoryInput = document.getElementById('contentCategory').value.trim();
+        let categoryId = null;
+        
+        if (categoryInput) {
+            // Check if it's an existing category
+            const existingCategory = categories.find(cat => cat.name.toLowerCase() === categoryInput.toLowerCase());
+            if (existingCategory) {
+                categoryId = existingCategory.id;
+            } else {
+                // It's a new category, we'll send the name and let the backend create it
+                categoryId = categoryInput; // Send the name for new categories
+            }
+        }
+        
         const contentData = {
             title: title,
             slug: document.getElementById('contentSlug').value.trim() || generateSlug(title),
             excerpt: document.getElementById('contentExcerpt').value.trim(),
             content: body,
             status: document.getElementById('contentStatus').value,
-            category_id: document.getElementById('contentCategory').value || null,
+            category_id: categoryId,
             meta_title: document.getElementById('contentMetaTitle').value.trim(),
             meta_description: document.getElementById('contentMetaDescription').value.trim(),
             template_theme: document.getElementById('templateTheme').value || 'default'
@@ -1566,7 +1579,7 @@ async function editContent(contentId) {
             document.getElementById('contentExcerpt').value = content.excerpt || '';
             document.getElementById('contentBody').value = content.content || '';
             document.getElementById('contentStatus').value = content.status || 'draft';
-            document.getElementById('contentCategory').value = content.category_id || '';
+            document.getElementById('contentCategory').value = content.category ? content.category.name : '';
             document.getElementById('contentMetaTitle').value = content.meta_title || '';
             document.getElementById('contentMetaDescription').value = content.meta_description || '';
             document.getElementById('templateTheme').value = content.template_theme || 'default';

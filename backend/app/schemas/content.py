@@ -1,5 +1,5 @@
 from pydantic import BaseModel, validator
-from typing import Optional, TYPE_CHECKING, List
+from typing import Optional, TYPE_CHECKING, List, Union
 from datetime import datetime
 from enum import Enum
 import re
@@ -110,7 +110,7 @@ class ContentCreate(BaseModel):
     
     # Relaciones
     keyword_id: Optional[int] = None
-    category_id: Optional[int] = None
+    category_id: Optional[Union[int, str]] = None  # Puede ser ID existente o nombre de nueva categoría
     tag_ids: Optional[List[int]] = []
     
     # Fechas
@@ -171,7 +171,7 @@ class ContentUpdate(BaseModel):
     is_indexed: Optional[bool] = None
     
     # Relaciones
-    category_id: Optional[int] = None
+    category_id: Optional[Union[int, str]] = None  # Puede ser ID existente o nombre de nueva categoría
     tag_ids: Optional[List[int]] = None
     
     # Fechas

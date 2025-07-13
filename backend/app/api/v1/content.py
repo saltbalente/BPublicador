@@ -31,6 +31,43 @@ def create_content(
         if not keyword:
             raise HTTPException(status_code=404, detail="Palabra clave no encontrada")
     
+    # Manejar categoría - puede ser ID existente o nombre de nueva categoría
+    category_id = None
+    if content.category_id:
+        if isinstance(content.category_id, int):
+            # Es un ID existente
+            from app.models.category import Category
+            category = db.query(Category).filter(Category.id == content.category_id).first()
+            if not category:
+                raise HTTPException(status_code=404, detail="Categoría no encontrada")
+            category_id = content.category_id
+        else:
+            # Es un nombre de categoría, buscar o crear
+            from app.models.category import Category
+            category_name = content.category_id.strip()
+            category = db.query(Category).filter(Category.name.ilike(category_name)).first()
+            if not category:
+                # Crear nueva categoría
+                import re
+                slug = re.sub(r'[^a-zA-Z0-9\s]', '', category_name.lower())
+                slug = re.sub(r'\s+', '-', slug.strip())
+                
+                # Verificar que el slug sea único
+                base_slug = slug
+                counter = 1
+                while db.query(Category).filter(Category.slug == slug).first():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                
+                category = Category(
+                    name=category_name,
+                    slug=slug
+                )
+                db.add(category)
+                db.commit()
+                db.refresh(category)
+            category_id = category.id
+    
     # Verificar límite diario del usuario (simplificado por ahora)
     # TODO: Implementar contador diario real
     from datetime import datetime, date
@@ -87,7 +124,7 @@ def create_content(
         allow_comments=content.allow_comments,
         is_indexed=content.is_indexed,
         keyword_id=content.keyword_id,
-        category_id=content.category_id,
+        category_id=category_id,
         scheduled_at=content.scheduled_at,
         user_id=current_user.id,
         word_count=len((content.content or "").split()) if content.content else 0
@@ -163,6 +200,43 @@ def update_content(
         raise HTTPException(status_code=403, detail="No tienes acceso a este contenido")
 
     update_data = content_update.dict(exclude_unset=True)
+
+    # Manejar categoría si se está actualizando
+    if 'category_id' in update_data and update_data['category_id'] is not None:
+        category_value = update_data['category_id']
+        if isinstance(category_value, int):
+            # Es un ID existente
+            from app.models.category import Category
+            category = db.query(Category).filter(Category.id == category_value).first()
+            if not category:
+                raise HTTPException(status_code=404, detail="Categoría no encontrada")
+            update_data['category_id'] = category_value
+        else:
+            # Es un nombre de categoría, buscar o crear
+            from app.models.category import Category
+            category_name = category_value.strip()
+            category = db.query(Category).filter(Category.name.ilike(category_name)).first()
+            if not category:
+                # Crear nueva categoría
+                import re
+                slug = re.sub(r'[^a-zA-Z0-9\s]', '', category_name.lower())
+                slug = re.sub(r'\s+', '-', slug.strip())
+                
+                # Verificar que el slug sea único
+                base_slug = slug
+                counter = 1
+                while db.query(Category).filter(Category.slug == slug).first():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                
+                category = Category(
+                    name=category_name,
+                    slug=slug
+                )
+                db.add(category)
+                db.commit()
+                db.refresh(category)
+            update_data['category_id'] = category.id
 
     # Si se está actualizando el slug, verificar que no exista en otro contenido
     if 'slug' in update_data and update_data['slug'] != content.slug:

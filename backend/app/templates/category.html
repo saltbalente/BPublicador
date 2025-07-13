@@ -14,7 +14,7 @@
                 <nav aria-label="breadcrumb" class="breadcrumb-nav">
                     <ol class="breadcrumb">
                         <li class="breadcrumb-item"><a href="{{ base_url }}/">Inicio</a></li>
-                        <li class="breadcrumb-item"><a href="{{ base_url }}/categories">Categorías</a></li>
+                        <li class="breadcrumb-item"><a href="{{ base_url }}/categoria/">Categorías</a></li>
                         <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
                     </ol>
                 </nav>
@@ -91,7 +91,7 @@
                                  alt="{{ featured_image.alt_text or post.title }}" 
                                  class="post-img">
                             <div class="image-overlay">
-                                <a href="{{ base_url }}/{{ post.slug }}" class="overlay-btn">
+                                <a href="{{ base_url }}/content/{{ post.slug }}" class="overlay-btn">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
                                     </svg>
@@ -123,7 +123,7 @@
                             
                             <!-- Post Title -->
                             <h3 class="post-title">
-                                <a href="{{ base_url }}/{{ post.slug }}" class="title-link">
+                                <a href="{{ base_url }}/content/{{ post.slug }}" class="title-link">
                                     {{ post.title }}
                                 </a>
                             </h3>
@@ -149,7 +149,7 @@
                             
                             <!-- Read More Button -->
                             <div class="read-more">
-                                <a href="{{ base_url }}/{{ post.slug }}" class="read-more-btn">
+                                <a href="{{ base_url }}/content/{{ post.slug }}" class="read-more-btn">
                                     Leer artículo completo
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
