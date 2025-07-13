@@ -496,12 +496,23 @@ async def health_check():
             }
         )
 
+# Endpoints de health check - DEBEN estar al principio para evitar dependencias
 @app.get("/ping")
 def ping():
-    """Endpoint simple de ping para verificar que la app está viva"""
-    return {"message": "pong", "status": "ok"}
+    """Endpoint ultra-simple de ping - no depende de nada"""
+    return {"status": "ok"}
 
 @app.get("/ready")
 def ready():
-    """Endpoint para verificar que la app está lista para recibir tráfico"""
-    return {"status": "ready", "service": "autopublicador-api"}
+    """Endpoint para verificar que la app está lista"""
+    import time
+    return {
+        "status": "ready", 
+        "service": "autopublicador-api",
+        "timestamp": int(time.time())
+    }
+
+@app.get("/healthz")
+def healthz():
+    """Endpoint de health check compatible con Kubernetes/Railway"""
+    return {"status": "healthy"}

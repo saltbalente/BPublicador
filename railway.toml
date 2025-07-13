@@ -1,13 +1,16 @@
 [build]
 builder = "nixpacks"
-watchPatterns = ["backend/**"]
+watchPatterns = ["**/*.py", "requirements.txt", "alembic/**/*"]
 
 [deploy]
 startCommand = "/app/start.sh"
 healthcheckPath = "/ping"
-healthcheckTimeout = 300
+healthcheckTimeout = 600
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 10
+restartPolicyMaxRetries = 15
+
+[experimental]
+incremental = false
 
 [env]
 PORT = { default = "8000" }
