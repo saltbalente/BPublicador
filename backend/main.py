@@ -497,6 +497,11 @@ async def health_check():
         )
 
 @app.get("/ping")
-async def ping():
+def ping():
     """Endpoint simple de ping para verificar que la app está viva"""
-    return {"message": "pong"}
+    return {"message": "pong", "status": "ok"}
+
+@app.get("/ready")
+def ready():
+    """Endpoint para verificar que la app está lista para recibir tráfico"""
+    return {"status": "ready", "service": "autopublicador-api"}
