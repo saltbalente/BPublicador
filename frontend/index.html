@@ -248,8 +248,8 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showSection('analytics')">
-                            <i class="fas fa-chart-bar me-1"></i>Analytics
+                        <a class="nav-link" href="#" onclick="showSection('landings')">
+                            <i class="fas fa-rocket me-1"></i>Landings
                         </a>
                     </li>
                 </ul>
@@ -672,34 +672,97 @@
             </div>
         </div>
 
-        <!-- Analytics Section -->
-        <div id="analytics-section" class="content-section" style="display: none;">
+        <!-- Landings Section -->
+        <div id="landings-section" class="content-section" style="display: none;">
             <div class="row">
                 <div class="col-12">
-                    <h2><i class="fas fa-chart-bar me-2"></i>Analytics</h2>
+                    <h2><i class="fas fa-rocket me-2"></i>Landings</h2>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Analytics de Keywords</h5>
-                        </div>
-                        <div class="card-body">
-                            <div id="keywordAnalytics">
-                                <!-- Analytics will be loaded here -->
+            
+            <!-- Sub-navigation for Landings -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <ul class="nav nav-tabs" id="landingsTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="creador-tab" data-bs-toggle="tab" data-bs-target="#creador" type="button" role="tab" aria-controls="creador" aria-selected="true">
+                                <i class="fas fa-magic me-1"></i>Creador
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="seo-tab" data-bs-toggle="tab" data-bs-target="#seo" type="button" role="tab" aria-controls="seo" aria-selected="false">
+                                <i class="fas fa-search me-1"></i>SEO
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="temas-tab" data-bs-toggle="tab" data-bs-target="#temas" type="button" role="tab" aria-controls="temas" aria-selected="false">
+                                <i class="fas fa-palette me-1"></i>Temas
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Tab content -->
+            <div class="tab-content" id="landingsTabContent">
+                <!-- Creador Tab -->
+                <div class="tab-pane fade show active" id="creador" role="tabpanel" aria-labelledby="creador-tab">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-magic me-2"></i>Creador de Landing Pages</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-magic fa-3x text-muted mb-3"></i>
+                                        <h4 class="text-muted">Creador de Landing Pages</h4>
+                                        <p class="text-muted">Esta sección estará disponible próximamente.</p>
+                                        <p class="text-muted">Aquí podrás crear landing pages personalizadas con herramientas de arrastrar y soltar.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Analytics de Contenido</h5>
+                
+                <!-- SEO Tab -->
+                <div class="tab-pane fade" id="seo" role="tabpanel" aria-labelledby="seo-tab">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-search me-2"></i>Optimización SEO</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                        <h4 class="text-muted">Optimización SEO</h4>
+                                        <p class="text-muted">Esta sección estará disponible próximamente.</p>
+                                        <p class="text-muted">Aquí podrás optimizar tus landing pages para motores de búsqueda.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div id="contentAnalytics">
-                                <!-- Analytics will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Temas Tab -->
+                <div class="tab-pane fade" id="temas" role="tabpanel" aria-labelledby="temas-tab">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-palette me-2"></i>Temas y Plantillas</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-palette fa-3x text-muted mb-3"></i>
+                                        <h4 class="text-muted">Temas y Plantillas</h4>
+                                        <p class="text-muted">Esta sección estará disponible próximamente.</p>
+                                        <p class="text-muted">Aquí podrás seleccionar y personalizar temas para tus landing pages.</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -441,45 +441,53 @@ function displaySchedulerStats(stats) {
     `;
 }
 
-// Analytics Functions
-async function loadAnalytics() {
+// Landings Functions
+/**
+ * Carga la sección de Landings
+ * Inicializa las pestañas y prepara las funcionalidades futuras
+ */
+async function loadLandings() {
     try {
-        const keywordAnalytics = await apiRequest('/analytics/keywords');
-        if (keywordAnalytics) {
-            displayKeywordAnalytics(keywordAnalytics);
-        }
+        console.log('Cargando sección de Landings...');
+        // Placeholder para futuras funcionalidades
+        // Aquí se cargarán los datos de landing pages cuando estén implementadas
         
-        const contentAnalytics = await apiRequest('/analytics/content');
-        if (contentAnalytics) {
-            displayContentAnalytics(contentAnalytics);
-        }
+        // Inicializar las pestañas de Bootstrap si es necesario
+        initializeLandingsTabs();
+        
     } catch (error) {
-        console.error('Error loading analytics:', error);
+        console.error('Error loading landings:', error);
     }
 }
 
-function displayKeywordAnalytics(analytics) {
-    const div = document.getElementById('keywordAnalytics');
-    div.innerHTML = `
-        <p><strong>Total Keywords:</strong> ${analytics.total_keywords || 0}</p>
-        <p><strong>Keywords Activas:</strong> ${analytics.active_keywords || 0}</p>
-        <p><strong>Promedio de Volumen:</strong> ${analytics.average_volume || 0}</p>
-        <div class="mt-3">
-            <small class="text-muted">${analytics.message || 'Analytics en desarrollo'}</small>
-        </div>
-    `;
+/**
+ * Inicializa las pestañas de la sección Landings
+ */
+function initializeLandingsTabs() {
+    // Placeholder para inicialización de pestañas
+    console.log('Inicializando pestañas de Landings...');
 }
 
-function displayContentAnalytics(analytics) {
-    const div = document.getElementById('contentAnalytics');
-    div.innerHTML = `
-        <p><strong>Total Contenido:</strong> ${analytics.total_content || 0}</p>
-        <p><strong>Contenido Publicado:</strong> ${analytics.published_content || 0}</p>
-        <p><strong>Contenido Borrador:</strong> ${analytics.draft_content || 0}</p>
-        <div class="mt-3">
-            <small class="text-muted">${analytics.message || 'Analytics en desarrollo'}</small>
-        </div>
-    `;
+/**
+ * Funciones placeholder para las diferentes secciones de Landings
+ */
+
+// Creador de Landing Pages
+function loadCreadorSection() {
+    console.log('Cargando sección Creador...');
+    // Aquí se implementará el creador de landing pages
+}
+
+// Optimización SEO
+function loadSeoSection() {
+    console.log('Cargando sección SEO...');
+    // Aquí se implementarán las herramientas de SEO
+}
+
+// Temas y Plantillas
+function loadTemasSection() {
+    console.log('Cargando sección Temas...');
+    // Aquí se implementará la gestión de temas
 }
 
 // Navigation Functions
@@ -529,8 +537,8 @@ function showSection(sectionName) {
         case 'scheduler':
             loadSchedulerStatus();
             break;
-        case 'analytics':
-            loadAnalytics();
+        case 'landings':
+            loadLandings();
             break;
         case 'settings':
             initializeApiSettings();
