@@ -75,6 +75,18 @@ setup-db: ## Configurar base de datos
 	@cd $(BACKEND_DIR) && source venv/bin/activate && $(PYTHON) -c "from app.core.init_db import init_db; import asyncio; asyncio.run(init_db())"
 	@echo "$(GREEN)✅ Base de datos configurada$(NC)"
 
+verify: ## Verificar instalación completa
+	@echo "$(BLUE)🔍 Verificando instalación...$(NC)"
+	@$(PYTHON) scripts/verify_installation.py
+
+verify-quick: ## Verificación rápida (solo estructura)
+	@echo "$(BLUE)🔍 Verificación rápida...$(NC)"
+	@if [ -d "$(BACKEND_DIR)" ] && [ -d "$(FRONTEND_DIR)" ]; then \
+		echo "$(GREEN)✅ Estructura básica OK$(NC)"; \
+	else \
+		echo "$(RED)❌ Estructura del proyecto incompleta$(NC)"; \
+	fi
+
 # Desarrollo
 dev: ## Iniciar entorno de desarrollo (backend + frontend)
 	@echo "$(BLUE)🚀 Iniciando entorno de desarrollo...$(NC)"

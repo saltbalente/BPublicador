@@ -34,7 +34,27 @@ Esta es una plataforma web moderna desarrollada con **Python + FastAPI + React**
 
 ## 🚀 Instalación y Configuración
 
-### Prerrequisitos
+### 🍎 Instalación Automática para Mac (Recomendado)
+
+```bash
+# Clonar el repositorio
+git clone https://github.com/saltbalente/BPublicador.git
+cd BPublicador
+
+# Ejecutar instalador automático
+./install_mac.sh
+```
+
+**El script automático instalará:**
+- Homebrew (si no está instalado)
+- Python 3.11, Node.js 18, Git
+- PostgreSQL y Redis (opcionales)
+- Todas las dependencias del proyecto
+- Configuración inicial completa
+
+### 📋 Instalación Manual
+
+#### Prerrequisitos
 
 - Python 3.9+
 - Node.js 18+
@@ -42,11 +62,11 @@ Esta es una plataforma web moderna desarrollada con **Python + FastAPI + React**
 - Redis
 - API Keys de DeepSeek y OpenAI
 
-### 1. Clonar el Repositorio
+#### 1. Clonar el Repositorio
 
 ```bash
-git clone <repository-url>
-cd autopublicador-web
+git clone https://github.com/saltbalente/BPublicador.git
+cd BPublicador
 ```
 
 ### 2. Configurar Backend
@@ -91,16 +111,55 @@ cp .env.example .env.local
 
 ### 5. Ejecutar la Aplicación
 
-#### Backend
+#### Usando Makefile (Recomendado)
 ```bash
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Iniciar todo (abre terminales separadas en Mac)
+make dev
+
+# O iniciar servicios por separado
+make dev-backend    # Backend en http://localhost:8001
+make dev-frontend   # Frontend en http://localhost:3000
 ```
 
-#### Frontend
+#### Manual
+**Backend:**
+```bash
+cd backend
+source venv/bin/activate
+uvicorn main:app --reload --host 0.0.0.0 --port 8001
+```
+
+**Frontend:**
 ```bash
 cd frontend
 npm run dev
+```
+
+## 🔍 Verificación de la Instalación
+
+### Verificación Automática
+```bash
+# Verificación completa
+make verify
+
+# Verificación rápida
+make verify-quick
+
+# O ejecutar directamente
+python3 scripts/verify_installation.py
+```
+
+### Verificación Manual
+```bash
+# Verificar backend
+curl http://localhost:8001/ping
+# Debería responder: {"status":"ok"}
+
+# Verificar frontend
+# Abrir http://localhost:3000 en el navegador
+
+# Verificar documentación API
+# Abrir http://localhost:8001/docs en el navegador
 ```
 
 ## 🔧 Configuración de Variables de Entorno
