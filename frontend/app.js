@@ -503,6 +503,15 @@ function showSection(sectionName) {
         currentLink.classList.add('active');
     }
     
+    // Load DALL-E gallery when content section is shown
+    if (sectionName === 'content') {
+        setTimeout(() => {
+            if (typeof loadDalleGallery === 'function') {
+                loadDalleGallery();
+            }
+        }, 100);
+    }
+    
     // Save current section to localStorage
     localStorage.setItem('activeSection', sectionName);
     
@@ -2484,3 +2493,251 @@ window.previewImage = previewImage;
 window.selectPreviewedImage = selectPreviewedImage;
 window.confirmDeleteImage = confirmDeleteImage;
 window.changePage = changePage;
+
+// DALL-E Image Generation Functions
+async function generateDalleImage() {
+    const prompt = document.getElementById('eblagalPrompt').value.trim();
+    
+    if (!prompt) {
+        showAlert('Por favor ingresa un prompt para generar la imagen', 'warning');
+        return;
+    }
+    
+    const generateBtn = event.target;
+    const statusDiv = document.getElementById('eblagalGenerationStatus');
+    const previewDiv = document.getElementById('eblagalPreview');
+    
+    // Update UI to show loading state
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...';
+    statusDiv.innerHTML = '<div class="alert alert-info">Generando imagen con DALL-E...</div>';
+    previewDiv.innerHTML = '';
+    
+    try {
+        const response = await fetch('/api/v1/image-generation/dalle-generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                size: '1024x1024',
+                quality: 'standard'
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Show success status
+        statusDiv.innerHTML = '<div class="alert alert-success">¡Imagen generada exitosamente!</div>';
+        
+        // Show preview
+        previewDiv.innerHTML = `
+            <div class="text-center">
+                <img src="${result.image_url}" alt="Generated image" class="img-fluid rounded" style="max-height: 200px;">
+                <div class="mt-2">
+                    <button class="btn btn-primary btn-sm" onclick="insertDalleImage('${result.image_url}', '${prompt}')">
+                        <i class="fas fa-plus"></i> Insertar en contenido
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Reload gallery to show new image
+        loadDalleGallery();
+        
+        // Clear prompt
+        document.getElementById('eblagalPrompt').value = '';
+        
+    } catch (error) {
+        console.error('Error generating DALL-E image:', error);
+        statusDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    } finally {
+        // Reset button
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generar Imagen';
+    }
+}
+
+function insertDalleImage(imageUrl, prompt) {
+    const imageAlt = `Imagen generada: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}`;
+    const imageTitle = `Imagen DALL-E: ${prompt}`;
+    
+    const imageHtml = `\n\n<img src="${imageUrl}" alt="${imageAlt}" title="${imageTitle}" class="content-image">\n\n`;
+    
+    // Insert image at cursor position
+    insertAtCursor('contentBody', imageHtml);
+    
+    showAlert('Imagen insertada exitosamente en el contenido', 'success');
+}
+
+async function loadDalleGallery() {
+    try {
+        const response = await fetch('/api/v1/image-generation/dalle-gallery', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('DALL-E gallery response:', data);
+        
+        // Handle different response formats
+        let images = [];
+        if (Array.isArray(data)) {
+            images = data;
+        } else if (data && Array.isArray(data.images)) {
+            images = data.images;
+        } else if (data && data.message) {
+            console.log('Gallery message:', data.message);
+            images = [];
+        }
+        
+        displayDalleGallery(images);
+        
+    } catch (error) {
+        console.error('Error loading DALL-E gallery:', error);
+        const galleryContainer = document.getElementById('eblagalGallery');
+        galleryContainer.innerHTML = '<div class="alert alert-warning">Error al cargar la galería de imágenes</div>';
+    }
+}
+
+function displayDalleGallery(images) {
+    const galleryContainer = document.getElementById('eblagalGallery');
+    
+    if (!images || !Array.isArray(images) || images.length === 0) {
+        galleryContainer.innerHTML = '<div class="text-muted text-center py-4">No hay imágenes generadas aún</div>';
+        return;
+    }
+    
+    const galleryHtml = images.map(image => `
+        <div class="col-md-4 col-lg-3">
+            <div class="eblagal-gallery-item">
+                <div class="eblagal-image-container">
+                    <img src="${image.url}" alt="Generated image" class="eblagal-image" onclick="previewDalleImage('${image.url}', '${image.filename}')">
+                </div>
+                <div class="eblagal-info">
+                    <div class="eblagal-url" title="${image.url}">${image.url}</div>
+                    <div class="eblagal-date">${new Date(image.created_at).toLocaleDateString()}</div>
+                    <div class="eblagal-actions">
+                        <button class="eblagal-copy-btn" onclick="copyToClipboard('${image.url}')" title="Copiar URL">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="insertDalleImage('${image.url}', 'Imagen generada')" title="Insertar en contenido">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteDalleImage('${image.filename}')" title="Eliminar imagen">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    galleryContainer.innerHTML = galleryHtml;
+}
+
+function previewDalleImage(imageUrl, filename) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vista previa de imagen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="${imageUrl}" alt="Preview" class="img-fluid" style="max-height: 70vh;">
+                    <div class="mt-3">
+                        <small class="text-muted">${filename}</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="insertDalleImage('${imageUrl}', 'Imagen generada'); bootstrap.Modal.getInstance(this.closest('.modal')).hide();">Insertar en contenido</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Remove modal from DOM when hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showAlert('URL copiada al portapapeles', 'success');
+    }).catch(err => {
+        console.error('Error copying to clipboard:', err);
+        showAlert('Error al copiar URL', 'danger');
+    });
+}
+
+async function deleteDalleImage(filename) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/v1/image-generation/dalle-delete/${encodeURIComponent(filename)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        showAlert('Imagen eliminada exitosamente', 'success');
+        
+        // Reload gallery to reflect changes
+        loadDalleGallery();
+        
+    } catch (error) {
+        console.error('Error deleting DALL-E image:', error);
+        showAlert(`Error al eliminar imagen: ${error.message}`, 'danger');
+    }
+}
+
+// Make DALL-E functions globally available
+window.generateDalleImage = generateDalleImage;
+window.insertDalleImage = insertDalleImage;
+window.loadDalleGallery = loadDalleGallery;
+window.previewDalleImage = previewDalleImage;
+window.copyToClipboard = copyToClipboard;
+window.deleteDalleImage = deleteDalleImage;
+
+// Load DALL-E gallery when content section is shown
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for when content section becomes active
+    const contentTab = document.querySelector('[data-section="content"]');
+    if (contentTab) {
+        contentTab.addEventListener('click', function() {
+            setTimeout(() => {
+                loadDalleGallery();
+            }, 100);
+        });
+    }
+});

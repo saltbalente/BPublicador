@@ -65,6 +65,11 @@ class ManualImageGenerationRequest(BaseModel):
     size: Optional[str] = "1024x1024"
     quality: Optional[str] = "standard"
 
+class DalleImageRequest(BaseModel):
+    prompt: str
+    size: Optional[str] = "1024x1024"
+    quality: Optional[str] = "standard"
+
 @router.post("/generate", response_model=None)
 async def generate_image(
     request: ImageGenerationRequest,
@@ -922,4 +927,146 @@ async def delete_manual_image(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting manual image: {str(e)}"
+        )
+
+@router.post("/dalle-generate", response_model=None)
+async def generate_dalle_image(
+    request: DalleImageRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Genera una imagen usando DALL-E y la guarda en la carpeta especificada
+    """
+    try:
+        image_generator = ImageGenerator(db)
+        if not image_generator.openai_client:
+            raise HTTPException(status_code=400, detail="OpenAI API key not configured. Please set OpenAI API key in settings.")
+        
+        # Generar la imagen
+        result = image_generator.generate_image(
+            prompt=request.prompt,
+            style="realistic",
+            size=request.size,
+            quality=request.quality
+        )
+        
+        # Mover la imagen a la carpeta específica
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        target_dir = os.path.join(backend_dir, "static", "images", "generated")
+        os.makedirs(target_dir, exist_ok=True)
+        
+        # Generar nombre único
+        file_extension = ".png"  # DALL-E genera PNG
+        unique_filename = f"dalle_{uuid.uuid4()}{file_extension}"
+        target_path = os.path.join(target_dir, unique_filename)
+        
+        # Copiar la imagen a la nueva ubicación
+        if os.path.exists(result["image_path"]):
+            shutil.copy2(result["image_path"], target_path)
+        
+        # URL relativa para acceso web
+        image_url = f"/static/images/generated/{unique_filename}"
+        
+        return {
+            "success": True,
+            "image_url": image_url,
+            "image_path": target_path,
+            "filename": unique_filename,
+            "prompt_used": request.prompt,
+            "alt_text": result["alt_text"],
+            "created_at": str(uuid.uuid1().time)
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating DALL-E image: {str(e)}"
+        )
+
+@router.get("/dalle-gallery", response_model=None)
+async def get_dalle_gallery(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Obtiene la galería de imágenes generadas con DALL-E
+    """
+    try:
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        images_dir = os.path.join(backend_dir, "static", "images", "generated")
+        
+        if not os.path.exists(images_dir):
+            return {"success": True, "images": []}
+        
+        images = []
+        for filename in os.listdir(images_dir):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
+                file_path = os.path.join(images_dir, filename)
+                file_stats = os.stat(file_path)
+                
+                images.append({
+                    "filename": filename,
+                    "url": f"/static/images/generated/{filename}",
+                    "created_at": file_stats.st_ctime,
+                    "size": file_stats.st_size
+                })
+        
+        # Ordenar por fecha de creación (más recientes primero)
+        images.sort(key=lambda x: x["created_at"], reverse=True)
+        
+        return {
+            "success": True,
+            "images": images
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error loading DALL-E gallery: {str(e)}"
+        )
+
+@router.delete("/dalle-delete/{filename}", response_model=None)
+async def delete_dalle_image(
+    filename: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Elimina una imagen generada con DALL-E
+    """
+    try:
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        images_dir = os.path.join(backend_dir, "static", "images", "generated")
+        file_path = os.path.join(images_dir, filename)
+        
+        # Verificar que el archivo existe
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Image not found"
+            )
+        
+        # Verificar que el archivo está en el directorio correcto (seguridad)
+        if not file_path.startswith(images_dir):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid file path"
+            )
+        
+        # Eliminar el archivo
+        os.remove(file_path)
+        
+        return {
+            "success": True,
+            "message": "Image deleted successfully",
+            "filename": filename
+        }
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting DALL-E image: {str(e)}"
         )
