@@ -1197,22 +1197,54 @@ function showEditLandingModal(landingPage) {
                             <!-- Pestaña de HTML Personalizado -->
                             <div class="tab-pane fade" id="html-pane" role="tabpanel">
                                 <div class="mt-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label for="editCustomHTML" class="form-label mb-0">
-                                            <i class="fab fa-html5 me-1"></i>HTML Personalizado para esta Landing Page
-                                        </label>
-                                        <small class="text-muted">Edita el HTML completo de esta landing page</small>
-                                    </div>
-                                    <div class="alert alert-warning" role="alert">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                        <strong>¡Cuidado!</strong> Editar el HTML puede afectar el funcionamiento de la landing page. 
-                                        Asegúrate de mantener una estructura HTML válida.
-                                    </div>
-                                    <textarea class="form-control font-monospace" id="editCustomHTML" rows="20" 
-                                              placeholder="<!DOCTYPE html>\n<html lang='es'>\n<head>\n    <meta charset='UTF-8'>\n    <title>Mi Landing Page</title>\n</head>\n<body>\n    <!-- Tu contenido aquí -->\n</body>\n</html>">${landingPage.html_content || ''}</textarea>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Si dejas este campo vacío, se usará el HTML generado automáticamente.
+                                    <div class="row">
+                                        <!-- Editor HTML -->
+                                        <div class="col-md-8">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <label for="editCustomHTML" class="form-label mb-0">
+                                                    <i class="fab fa-html5 me-1"></i>HTML Personalizado para esta Landing Page
+                                                </label>
+                                                <small class="text-muted">Edita el HTML completo de esta landing page</small>
+                                            </div>
+                                            <div class="alert alert-warning" role="alert">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <strong>¡Cuidado!</strong> Editar el HTML puede afectar el funcionamiento de la landing page. 
+                                                Asegúrate de mantener una estructura HTML válida.
+                                            </div>
+                                            <textarea class="form-control font-monospace" id="editCustomHTML" rows="20" 
+                                                      placeholder="<!DOCTYPE html>\n<html lang='es'>\n<head>\n    <meta charset='UTF-8'>\n    <title>Mi Landing Page</title>\n</head>\n<body>\n    <!-- Tu contenido aquí -->\n</body>\n</html>">${landingPage.html_content || ''}</textarea>
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Si dejas este campo vacío, se usará el HTML generado automáticamente.
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Asistente IA -->
+                                        <div class="col-md-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-primary text-white">
+                                                    <h6 class="mb-0">
+                                                        <i class="fas fa-robot me-1"></i>Asistente IA
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body d-flex flex-column">
+                                                    <div class="mb-3">
+                                                        <label for="aiPrompt" class="form-label">Describe qué quieres agregar:</label>
+                                                        <textarea class="form-control" id="aiPrompt" rows="4" 
+                                                                  placeholder="Ejemplo: Quiero agregar arriba de la clase testimonial-card fade-in un slider automático con servicios esotéricos diferentes a los que ya están en la landing page."></textarea>
+                                                    </div>
+                                                    <div class="mb-3 flex-grow-1">
+                                                        <label class="form-label">Historial de chat:</label>
+                                                        <div id="aiChatHistory" class="border rounded p-2" style="height: 200px; overflow-y: auto; background-color: #f8f9fa;">
+                                                            <small class="text-muted">El asistente te ayudará a agregar elementos a tu landing page...</small>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn btn-primary" onclick="processAIRequest()">
+                                                        <i class="fas fa-magic me-1"></i>Generar Código
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1246,6 +1278,193 @@ function showEditLandingModal(landingPage) {
     modal._element.addEventListener('shown.bs.modal', function() {
         setupCharacterCounters();
     });
+}
+
+// Process AI request for HTML assistant
+async function processAIRequest() {
+    const prompt = document.getElementById('aiPrompt').value.trim();
+    const currentHTML = document.getElementById('editCustomHTML').value.trim();
+    const currentCSS = document.getElementById('editCustomCSS').value.trim();
+    const chatHistory = document.getElementById('aiChatHistory');
+    
+    if (!prompt) {
+        showAlert('Por favor, describe qué quieres agregar a la landing page', 'warning');
+        return;
+    }
+    
+    // Add user message to chat
+    addChatMessage('user', prompt);
+    
+    // Clear prompt
+    document.getElementById('aiPrompt').value = '';
+    
+    // Show loading message
+    addChatMessage('assistant', 'Generando código...', true);
+    
+    try {
+        const response = await apiRequest('/landings/ai-assistant', {
+            method: 'POST',
+            body: JSON.stringify({
+                prompt: prompt,
+                current_html: currentHTML,
+                current_css: currentCSS,
+                current_js: ''
+            })
+        });
+        
+        // Remove loading message
+        const loadingMsg = chatHistory.querySelector('.loading-message');
+        if (loadingMsg) {
+            loadingMsg.remove();
+        }
+        
+        if (response && response.success) {
+            // Add AI response to chat
+            addChatMessage('assistant', response.explanation || 'Código generado exitosamente');
+            
+            // Apply the generated code
+            applyAIGeneratedCode(response);
+            
+        } else {
+            addChatMessage('assistant', 'Error: No se pudo generar el código. Intenta con una descripción más específica.');
+        }
+        
+    } catch (error) {
+        console.error('Error processing AI request:', error);
+        
+        // Remove loading message
+        const loadingMsg = chatHistory.querySelector('.loading-message');
+        if (loadingMsg) {
+            loadingMsg.remove();
+        }
+        
+        addChatMessage('assistant', 'Error: No se pudo conectar con el asistente de IA. Intenta nuevamente.');
+    }
+}
+
+// Add message to chat history
+function addChatMessage(sender, message, isLoading = false) {
+    const chatHistory = document.getElementById('aiChatHistory');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-2 ${isLoading ? 'loading-message' : ''}`;
+    
+    const senderClass = sender === 'user' ? 'bg-primary text-white' : 'bg-light';
+    const icon = sender === 'user' ? 'fas fa-user' : 'fas fa-robot';
+    
+    messageDiv.innerHTML = `
+        <div class="d-flex align-items-start">
+            <div class="${senderClass} rounded-circle p-1 me-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                <i class="${icon}" style="font-size: 10px;"></i>
+            </div>
+            <div class="flex-grow-1">
+                <small class="text-muted">${sender === 'user' ? 'Tú' : 'IA'}</small>
+                <div class="small">${message}${isLoading ? ' <i class="fas fa-spinner fa-spin"></i>' : ''}</div>
+            </div>
+        </div>
+    `;
+    
+    chatHistory.appendChild(messageDiv);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+// Apply AI generated code to the HTML editor
+function applyAIGeneratedCode(response) {
+    const htmlEditor = document.getElementById('editCustomHTML');
+    const cssEditor = document.getElementById('editCustomCSS');
+    let currentHTML = htmlEditor.value;
+    let currentCSS = cssEditor.value;
+    
+    try {
+        // Apply HTML changes
+        if (response.generated_html && response.insertion_target) {
+            currentHTML = insertHTMLAtTarget(currentHTML, response.generated_html, response.insertion_target, 'before');
+            htmlEditor.value = currentHTML;
+        } else if (response.generated_html) {
+            // Si no hay target específico, agregar al final del body o del HTML
+            if (currentHTML.includes('</body>')) {
+                currentHTML = currentHTML.replace('</body>', response.generated_html + '\n</body>');
+            } else {
+                currentHTML += '\n' + response.generated_html;
+            }
+            htmlEditor.value = currentHTML;
+        }
+        
+        // Apply CSS changes
+        if (response.generated_css) {
+            // Wrap CSS in <style> tags if not already wrapped
+            let cssToAdd = response.generated_css;
+            if (!cssToAdd.includes('<style>') && !cssToAdd.includes('</style>')) {
+                cssToAdd = `<style>\n${cssToAdd}\n</style>`;
+            }
+            // Add CSS to the existing CSS content
+            currentCSS += '\n\n/* AI Generated CSS */\n' + cssToAdd;
+            cssEditor.value = currentCSS;
+        }
+        
+        // Apply JavaScript changes (if any)
+        if (response.generated_js) {
+            // Insert JavaScript into HTML
+            const scriptTag = `\n<script>\n${response.generated_js}\n</script>`;
+            if (currentHTML.includes('</body>')) {
+                currentHTML = currentHTML.replace('</body>', scriptTag + '\n</body>');
+            } else {
+                currentHTML += scriptTag;
+            }
+            htmlEditor.value = currentHTML;
+        }
+        
+        showAlert('Código aplicado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error applying AI generated code:', error);
+        showAlert('Error al aplicar el código generado', 'danger');
+    }
+}
+
+// Insert HTML at target selector
+function insertHTMLAtTarget(html, newElement, targetSelector, position = 'before') {
+    try {
+        // Create a temporary DOM to parse HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Find target element by class, id, or tag
+        let targetElement = null;
+        
+        if (targetSelector.startsWith('.')) {
+            // Class selector
+            const className = targetSelector.substring(1);
+            targetElement = doc.querySelector(`[class*="${className}"]`);
+        } else if (targetSelector.startsWith('#')) {
+            // ID selector
+            targetElement = doc.querySelector(targetSelector);
+        } else {
+            // Tag selector or complex selector
+            targetElement = doc.querySelector(targetSelector);
+        }
+        
+        if (targetElement) {
+            const newElementNode = parser.parseFromString(newElement, 'text/html').body.firstChild;
+            
+            if (position === 'before') {
+                targetElement.parentNode.insertBefore(newElementNode, targetElement);
+            } else if (position === 'after') {
+                targetElement.parentNode.insertBefore(newElementNode, targetElement.nextSibling);
+            } else if (position === 'inside-start') {
+                targetElement.insertBefore(newElementNode, targetElement.firstChild);
+            } else if (position === 'inside-end') {
+                targetElement.appendChild(newElementNode);
+            }
+            
+            return doc.documentElement.outerHTML;
+        } else {
+            throw new Error(`No se encontró el elemento con selector: ${targetSelector}`);
+        }
+        
+    } catch (error) {
+        console.error('Error inserting HTML:', error);
+        throw error;
+    }
 }
 
 // Setup character counters for form fields

@@ -597,6 +597,70 @@ async def customize_theme(
         )
 
 # ============================================================================
+# ENDPOINTS PARA ASISTENTE DE IA
+# ============================================================================
+
+class AIAssistantRequest(BaseModel):
+    """Modelo para solicitudes del asistente de IA"""
+    prompt: str
+    current_html: str
+    current_css: str
+    current_js: str
+    landing_page_id: Optional[int] = None
+
+@router.post("/ai-assistant", response_model=None)
+async def ai_assistant(
+    request: AIAssistantRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Asistente de IA para generar elementos HTML, CSS y JavaScript
+    
+    Recibe una descripción del usuario y el código actual, y devuelve
+    los elementos generados que se pueden insertar en la landing page.
+    """
+    try:
+        from app.services.ai_assistant_service import AIAssistantService
+        
+        # Validar entrada
+        if not request.prompt.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El prompt es requerido"
+            )
+        
+        # Inicializar servicio de IA
+        ai_service = AIAssistantService()
+        
+        # Generar código con IA
+        result = await ai_service.generate_code_elements(
+            prompt=request.prompt,
+            current_html=request.current_html,
+            current_css=request.current_css,
+            current_js=request.current_js
+        )
+        
+        return {
+            "success": True,
+            "message": "Elementos generados exitosamente",
+            "generated_html": result.get("html"),
+            "generated_css": result.get("css"),
+            "generated_js": result.get("js"),
+            "insertion_target": result.get("target"),
+            "explanation": result.get("explanation"),
+            "data": result  # Para debugging
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en el asistente de IA: {str(e)}"
+        )
+
+# ============================================================================
 # ENDPOINTS GENERALES
 # ============================================================================
 
