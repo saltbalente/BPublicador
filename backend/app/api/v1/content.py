@@ -191,6 +191,9 @@ def update_content(
     current_user: User = Depends(get_current_active_user)
 ):
     """Actualizar contenido"""
+    import logging
+    logger = logging.getLogger("content_update")
+    
     content = db.query(Content).filter(Content.id == content_id).first()
     if content is None:
         raise HTTPException(status_code=404, detail="Contenido no encontrado")
@@ -199,6 +202,7 @@ def update_content(
     if content.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="No tienes acceso a este contenido")
 
+    logger.info(f"Actualizando contenido {content_id} con datos: {content_update.dict(exclude_unset=True)}")
     update_data = content_update.dict(exclude_unset=True)
 
     # Manejar categoría si se está actualizando

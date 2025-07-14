@@ -70,8 +70,8 @@ class ContentBase(BaseModel):
     
     @validator('meta_description')
     def validate_meta_description(cls, v):
-        if v and len(v) > 160:
-            raise ValueError('La meta descripción no puede exceder 160 caracteres')
+        if v and len(v) > 200:
+            raise ValueError('La meta descripción no puede exceder 200 caracteres')
         return v
     
     @validator('canonical_url')
@@ -132,8 +132,8 @@ class ContentCreate(BaseModel):
     
     @validator('meta_description')
     def validate_meta_description(cls, v):
-        if v and len(v) > 160:
-            raise ValueError('La meta descripción no puede exceder 160 caracteres')
+        if v and len(v) > 200:
+            raise ValueError('La meta descripción no puede exceder 200 caracteres')
         return v
     
     @validator('canonical_url')
@@ -177,6 +177,26 @@ class ContentUpdate(BaseModel):
     # Fechas
     scheduled_at: Optional[datetime] = None
     
+    @validator('category_id', pre=True)
+    def validate_category_id(cls, v):
+        # Convertir strings vacíos a None
+        if v == '' or v == 'null' or v == 'undefined':
+            return None
+        # Si es un string que parece un número, convertirlo a int
+        if isinstance(v, str) and v.isdigit():
+            return int(v)
+        return v
+    
+    @validator('meta_title', 'meta_description', 'focus_keyword', 'canonical_url', 
+               'author_name', 'publisher_name', 'featured_image_url', 'featured_image_alt', 
+               'featured_image_caption', 'article_section', 'schema_type', 'content_type', 
+               'template_theme', 'excerpt', pre=True)
+    def validate_string_fields(cls, v):
+        # Convertir strings vacíos a None
+        if v == '' or v == 'null' or v == 'undefined':
+            return None
+        return v
+    
     @validator('title')
     def validate_title(cls, v):
         if v is not None and len(v.strip()) < 5:
@@ -193,8 +213,8 @@ class ContentUpdate(BaseModel):
     
     @validator('meta_description')
     def validate_meta_description(cls, v):
-        if v and len(v) > 160:
-            raise ValueError('La meta descripción no puede exceder 160 caracteres')
+        if v and len(v) > 200:
+            raise ValueError('La meta descripción no puede exceder 200 caracteres')
         return v
     
     @validator('canonical_url')

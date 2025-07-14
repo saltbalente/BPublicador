@@ -19,7 +19,7 @@ from app.services.auth import get_password_hash
 from datetime import datetime
 
 # Database URL
-DATABASE_URL = "sqlite:////Volumes/SwapDisk/HERRAMIENTAS DESARROLLADAS/AUTOPUBLICADOR EN WEB - similar a wordpress/autopublicador.db"
+DATABASE_URL = "sqlite:///./autopublicador.db"
 
 def create_database():
     print("Creando base de datos...")
@@ -167,7 +167,7 @@ El tarot del amor puede ser una herramienta poderosa para entender mejor nuestra
 ¿Estás listo para descubrir lo que el tarot tiene que decir sobre tu vida amorosa?""",
             excerpt="Descubre los secretos del tarot del amor y aprende a interpretar las cartas para obtener insights sobre tu vida romántica y relaciones futuras.",
             status="published",
-            author_id=admin_user.id,
+            user_id=admin_user.id,
             category_id=category.id,
             keyword_id=keywords[0].id,
             meta_title="Tarot del Amor: Guía Completa para Descubrir tu Destino Romántico",

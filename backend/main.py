@@ -14,12 +14,66 @@ import time
 from datetime import datetime
 import os
 import html
+import logging
+
+# Configurar logging detallado
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Configurar logger específico para actualizaciones de contenido
+content_logger = logging.getLogger("content_update")
+content_logger.setLevel(logging.DEBUG)
 
 app = FastAPI(
     title="Autopublicador Web API",
     version="1.0.0",
     description="API para generación automática de contenido con IA"
 )
+
+# Exception handler para errores de validación de Pydantic
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger = logging.getLogger("validation_error")
+    logger.error(f"Error de validación en {request.method} {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": f"Error de validación: {exc.errors()}"}
+    )
+
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    logger = logging.getLogger("validation_error")
+    logger.error(f"Error de validación Pydantic en {request.method} {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": f"Error de validación Pydantic: {exc.errors()}"}
+    )
+
+# Middleware para capturar errores de validación
+@app.middleware("http")
+async def validation_error_middleware(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        return response
+    except Exception as e:
+        import traceback
+        logger = logging.getLogger("validation_error")
+        logger.error(f"Error en request {request.method} {request.url}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
+        # Si es un error de validación de Pydantic
+        if "ValidationError" in str(type(e)):
+            logger.error(f"Pydantic ValidationError: {e}")
+            return JSONResponse(
+                status_code=422,
+                content={"detail": f"Error de validación: {str(e)}"}
+            )
+        raise e
 
 # Configurar middleware de seguridad (DEBE IR ANTES QUE CORS)
 # app.add_middleware(
