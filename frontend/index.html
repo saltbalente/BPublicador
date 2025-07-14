@@ -86,6 +86,92 @@
             opacity: 0.8;
         }
         
+        /* Landing Pages Styles */
+        .landing-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .landing-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .landing-card .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .landing-card .badge {
+            font-size: 0.75rem;
+        }
+        
+        .landing-card .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .landing-card .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        #generateLandingModal .modal-dialog {
+            max-width: 600px;
+        }
+        
+        #generateLandingModal .alert-info {
+            background-color: #e3f2fd;
+            border-color: #bbdefb;
+            color: #1565c0;
+        }
+        
+        #viewLandingModal .modal-dialog {
+            max-width: 95vw;
+        }
+        
+        .generated-landing-preview {
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .generated-landing-preview .card-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border-bottom: none;
+        }
+        
+        .form-label i {
+            color: #6c757d;
+        }
+        
+        .btn-group-landing {
+            gap: 0.25rem;
+        }
+        
+        .landing-stats {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .landing-stats .stat-item {
+            text-align: center;
+        }
+        
+        .landing-stats .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .landing-stats .stat-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+        
         /* Temas */
         .theme-light .preview-card {
             background: #ffffff;
@@ -707,23 +793,7 @@
             <div class="tab-content" id="landingsTabContent">
                 <!-- Creador Tab -->
                 <div class="tab-pane fade show active" id="creador" role="tabpanel" aria-labelledby="creador-tab">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5><i class="fas fa-magic me-2"></i>Creador de Landing Pages</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="text-center py-5">
-                                        <i class="fas fa-magic fa-3x text-muted mb-3"></i>
-                                        <h4 class="text-muted">Creador de Landing Pages</h4>
-                                        <p class="text-muted">Esta sección estará disponible próximamente.</p>
-                                        <p class="text-muted">Aquí podrás crear landing pages personalizadas con herramientas de arrastrar y soltar.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Content will be loaded dynamically by loadCreadorSection() -->
                 </div>
                 
                 <!-- SEO Tab -->
@@ -756,11 +826,49 @@
                                     <h5><i class="fas fa-palette me-2"></i>Temas y Plantillas</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="text-center py-5">
-                                        <i class="fas fa-palette fa-3x text-muted mb-3"></i>
-                                        <h4 class="text-muted">Temas y Plantillas</h4>
-                                        <p class="text-muted">Esta sección estará disponible próximamente.</p>
-                                        <p class="text-muted">Aquí podrás seleccionar y personalizar temas para tus landing pages.</p>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <h5><i class="fas fa-palette me-2"></i>Temas Esotéricos Disponibles</h5>
+                                            <p class="text-muted mb-4">Selecciona un tema para aplicar a tus landing pages</p>
+                                            
+                                            <div id="themesContainer" class="row">
+                                                <!-- Los temas se cargarán aquí dinámicamente -->
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="card border-info">
+                                                <div class="card-header bg-info text-white">
+                                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="small mb-2"><strong>Temas Disponibles:</strong></p>
+                                                    <ul class="small mb-3">
+                                                        <li>Místico Lunar - Tema oscuro con efectos mágicos</li>
+                                                        <li>Alquimia Dorada - Tema dorado con símbolos alquímicos</li>
+                                                    </ul>
+                                                    <p class="small mb-0"><strong>Nota:</strong> Los temas se aplicarán automáticamente al CSS de tus landing pages.</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="card border-warning mt-3" id="selectedThemeInfo" style="display: none;">
+                                                <div class="card-header bg-warning text-dark">
+                                                    <h6 class="mb-0"><i class="fas fa-star me-2"></i>Tema Seleccionado</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="selectedThemeDetails"></div>
+                                                    <div class="mt-3">
+                                                        <label for="landingPageSelect" class="form-label">Aplicar a Landing Page:</label>
+                                                        <select class="form-select" id="landingPageSelect">
+                                                            <option value="">Selecciona una landing page...</option>
+                                                        </select>
+                                                        <button type="button" class="btn btn-primary btn-sm mt-2 w-100" onclick="applySelectedTheme()">
+                                                            <i class="fas fa-magic me-1"></i>Aplicar Tema
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

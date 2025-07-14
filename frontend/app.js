@@ -26,6 +26,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setupEventListeners();
     
+    // Setup Bootstrap tab event listeners
+    const creadorTab = document.getElementById('creador-tab');
+    if (creadorTab) {
+        creadorTab.addEventListener('shown.bs.tab', function (e) {
+            loadCreadorSection();
+        });
+    }
+    
+    const temasTab = document.getElementById('temas-tab');
+    if (temasTab) {
+        temasTab.addEventListener('shown.bs.tab', function (e) {
+            loadThemesAndTemplates();
+        });
+    }
+    
     // Restore active section from localStorage or URL hash
     restoreActiveSection();
 });
@@ -104,6 +119,9 @@ async function handleLogin(e) {
             const data = await response.json();
             authToken = data.access_token;
             localStorage.setItem('authToken', authToken);
+            
+            console.log('Login successful - token saved:', authToken ? 'EXISTS' : 'NULL');
+            console.log('Login successful - localStorage check:', localStorage.getItem('authToken') ? 'EXISTS' : 'NULL');
             
             loginModal.hide();
             await loadUserData();
@@ -472,22 +490,1284 @@ function initializeLandingsTabs() {
  * Funciones placeholder para las diferentes secciones de Landings
  */
 
+// ===== LANDING PAGES FUNCTIONALITY =====
+
 // Creador de Landing Pages
 function loadCreadorSection() {
-    console.log('Cargando sección Creador...');
-    // Aquí se implementará el creador de landing pages
+    loadUserLandingPages();
 }
 
 // Optimización SEO
 function loadSeoSection() {
     console.log('Cargando sección SEO...');
-    // Aquí se implementarán las herramientas de SEO
+    loadSeoTools();
 }
 
 // Temas y Plantillas
 function loadTemasSection() {
-    console.log('Cargando sección Temas...');
-    // Aquí se implementará la gestión de temas
+    loadThemesAndTemplates();
+}
+
+// ===== CREADOR FUNCTIONS =====
+
+// Cargar landing pages del usuario
+async function loadUserLandingPages() {
+    try {
+        console.log('=== EJECUTANDO loadUserLandingPages ===');
+        showLoading(true);
+        const response = await apiRequest('/landings/creador/landing-pages');
+        console.log('Respuesta del API:', response);
+        
+        if (response && response.landing_pages) {
+            displayUserLandingPages(response.landing_pages);
+        } else {
+            // Si la respuesta es exitosa pero no hay landing pages, mostrar lista vacía sin error
+            displayUserLandingPages([]);
+        }
+    } catch (error) {
+        console.error('Error loading user landing pages:', error);
+        
+        // Solo mostrar error si es un error real del servidor, no si simplemente no hay landing pages
+        if (error.status && error.status !== 404) {
+            showAlert('Error al cargar las landing pages', 'danger');
+        }
+        
+        // Siempre mostrar la interfaz, aunque esté vacía
+        displayUserLandingPages([]);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Mostrar landing pages del usuario
+function displayUserLandingPages(landingPages) {
+    const container = document.getElementById('creador');
+    
+    const html = `
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5><i class="fas fa-magic me-2"></i>Creador de Landing Pages</h5>
+                        <button class="btn btn-primary" onclick="showGenerateLandingModal()">
+                            <i class="fas fa-plus me-1"></i>Crear Nueva Landing
+                        </button>
+                    </div>
+                    
+                    ${landingPages.length === 0 ? `
+                        <div class="text-center py-5">
+                            <i class="fas fa-magic fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">¡Crea tu primera Landing Page!</h4>
+                            <p class="text-muted">Usa IA para generar landing pages ultra-optimizadas para SEO</p>
+                            <button class="btn btn-primary btn-lg" onclick="showGenerateLandingModal()">
+                                <i class="fas fa-magic me-2"></i>Crear Landing Page
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="row">
+                            ${landingPages.map(lp => `
+                                <div class="col-md-6 col-lg-4 mb-4">
+                                    <div class="card h-100 landing-card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title">${lp.title}</h6>
+                                                <span class="badge ${lp.is_published ? 'bg-success' : 'bg-secondary'}">
+                                                    ${lp.is_published ? 'Publicada' : 'Borrador'}
+                                                </span>
+                                            </div>
+                                            <p class="card-text text-muted small">${lp.seo_description || 'Sin descripción'}</p>
+                                            <div class="small text-muted mb-3">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                ${new Date(lp.created_at).toLocaleDateString()}
+                                            </div>
+                                            ${lp.is_published ? `
+                                                <div class="mb-2">
+                                                    <small class="text-success">
+                                                        <i class="fas fa-link me-1"></i>
+                                                        <a href="${window.location.origin}/landing/${lp.slug}" target="_blank" class="text-success text-decoration-none">
+                                                            ${window.location.origin}/landing/${lp.slug}
+                                                        </a>
+                                                    </small>
+                                                </div>
+                                            ` : ''}
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="viewLandingPage(${lp.id})" title="Ver">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="editLandingPage(${lp.id})" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                ${lp.is_published ? `
+                                                    <button class="btn btn-sm btn-outline-warning" onclick="unpublishLandingPage(${lp.id})" title="Despublicar">
+                                                        <i class="fas fa-eye-slash"></i>
+                                                    </button>
+                                                ` : `
+                                                    <button class="btn btn-sm btn-outline-success" onclick="publishLandingPage(${lp.id})" title="Publicar">
+                                                        <i class="fas fa-globe"></i>
+                                                    </button>
+                                                `}
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteLandingPage(${lp.id})" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Mostrar modal para generar landing page
+function showGenerateLandingModal() {
+    const modalHtml = `
+        <div class="modal fade" id="generateLandingModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-magic me-2"></i>Generar Landing Page con IA
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="generateLandingForm">
+                            <div class="mb-3">
+                                <label for="landingKeywords" class="form-label">
+                                    <i class="fas fa-key me-1"></i>Palabras Clave *
+                                </label>
+                                <input type="text" class="form-control" id="landingKeywords" 
+                                       placeholder="Ej: consultoría empresarial, coaching ejecutivo" required>
+                                <div class="form-text">Separa múltiples palabras clave con comas</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="landingPhone" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>Número de Teléfono *
+                                </label>
+                                <input type="tel" class="form-control" id="landingPhone" 
+                                       placeholder="Ej: +34 600 123 456" required>
+                                <div class="form-text">Se usará para el botón de WhatsApp</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="aiProvider" class="form-label">
+                                    <i class="fas fa-robot me-1"></i>Proveedor de IA
+                                </label>
+                                <select class="form-select" id="aiProvider">
+                                    <option value="openai">OpenAI (GPT-4)</option>
+                                    <option value="deepseek">DeepSeek</option>
+                                    <option value="gemini">Google Gemini</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="themeCategory" class="form-label">
+                                    <i class="fas fa-palette me-1"></i>Categoría Temática
+                                </label>
+                                <select class="form-select" id="themeCategory">
+                                    <option value="business">Negocios y Consultoría</option>
+                                    <option value="health">Salud y Bienestar</option>
+                                    <option value="esoteric">Esotérico y Espiritual</option>
+                                    <option value="technology">Tecnología</option>
+                                    <option value="education">Educación</option>
+                                    <option value="finance">Finanzas</option>
+                                    <option value="lifestyle">Estilo de Vida</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Configuración Avanzada -->
+                            <div class="card border-info mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cogs me-2"></i>Configuración Avanzada (Opcional)
+                                        <button type="button" class="btn btn-sm btn-outline-light float-end" onclick="toggleAdvancedConfig()">
+                                            <i class="fas fa-chevron-down" id="advancedToggleIcon"></i>
+                                        </button>
+                                    </h6>
+                                </div>
+                                <div class="card-body" id="advancedConfigBody" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="additionalServices" class="form-label">
+                                                    <i class="fas fa-plus me-1"></i>Servicios Adicionales
+                                                </label>
+                                                <textarea class="form-control" id="additionalServices" rows="3" 
+                                                         placeholder="Ej: Consultoría personalizada, Auditorías, Formación..."></textarea>
+                                                <div class="form-text">Separa cada servicio con una nueva línea</div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="ctaCount" class="form-label">
+                                                    <i class="fas fa-mouse-pointer me-1"></i>Cantidad de Call to Action
+                                                </label>
+                                                <select class="form-select" id="ctaCount">
+                                                    <option value="1">1 CTA</option>
+                                                    <option value="2" selected>2 CTAs</option>
+                                                    <option value="3">3 CTAs</option>
+                                                    <option value="4">4 CTAs</option>
+                                                    <option value="5">5 CTAs</option>
+                                                    <option value="6">6 CTAs</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="paragraphCount" class="form-label">
+                                                    <i class="fas fa-paragraph me-1"></i>Párrafos Informativos
+                                                </label>
+                                                <select class="form-select" id="paragraphCount">
+                                                    <option value="1">1 Párrafo</option>
+                                                    <option value="2">2 Párrafos</option>
+                                                    <option value="3" selected>3 Párrafos</option>
+                                                    <option value="4">4 Párrafos</option>
+                                                    <option value="5">5 Párrafos</option>
+                                                    <option value="6">6 Párrafos</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="writingStyle" class="form-label">
+                                                    <i class="fas fa-pen me-1"></i>Estilo de Redacción
+                                                </label>
+                                                <select class="form-select" id="writingStyle">
+                                                    <option value="persuasiva" selected>Persuasiva</option>
+                                                    <option value="tecnica">Técnica</option>
+                                                    <option value="vendedora">Vendedora</option>
+                                                    <option value="informativa">Informativa</option>
+                                                    <option value="emocional">Emocional</option>
+                                                    <option value="profesional">Profesional</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="landingLength" class="form-label">
+                                                    <i class="fas fa-ruler me-1"></i>Longitud de Landing Page
+                                                </label>
+                                                <select class="form-select" id="landingLength">
+                                                    <option value="corta">Corta (Concisa)</option>
+                                                    <option value="mediana" selected>Mediana (Equilibrada)</option>
+                                                    <option value="larga">Larga (Detallada)</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="includeSliders" class="form-label">
+                                                    <i class="fas fa-images me-1"></i>Sliders de Servicios
+                                                </label>
+                                                <select class="form-select" id="includeSliders">
+                                                    <option value="no">No incluir</option>
+                                                    <option value="si" selected>Sí incluir</option>
+                                                </select>
+                                                <div class="form-text">Sliders con categorías y descripciones de servicios</div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="includeSeparators" class="form-label">
+                                                    <i class="fas fa-minus me-1"></i>Separadores SVG
+                                                </label>
+                                                <select class="form-select" id="includeSeparators">
+                                                    <option value="no">No incluir</option>
+                                                    <option value="si" selected>Sí incluir</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="separatorStyle" class="form-label">
+                                                    <i class="fas fa-wave-square me-1"></i>Estilo de Separadores
+                                                </label>
+                                                <select class="form-select" id="separatorStyle">
+                                                    <option value="lines">Líneas (_____)</option>
+                                                    <option value="waves" selected>Ondas</option>
+                                                    <option value="geometric">Geométrico</option>
+                                                    <option value="organic">Orgánico</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="responsiveMenu" class="form-label">
+                                                    <i class="fas fa-bars me-1"></i>Menú Responsivo
+                                                </label>
+                                                <select class="form-select" id="responsiveMenu">
+                                                    <option value="no">No incluir</option>
+                                                    <option value="si" selected>Sí incluir</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="testimonialLength" class="form-label">
+                                                    <i class="fas fa-quote-left me-1"></i>Longitud de Testimonios
+                                                </label>
+                                                <select class="form-select" id="testimonialLength">
+                                                    <option value="cortos">Cortos</option>
+                                                    <option value="medianos" selected>Medianos</option>
+                                                    <option value="largos">Largos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>¿Qué se generará?</strong><br>
+                                • HTML semántico ultra-optimizado para SEO<br>
+                                • Contenido profesional centrado en tus keywords<br>
+                                • Diseño responsive y de carga rápida<br>
+                                • Botón de WhatsApp integrado<br>
+                                • Meta tags y estructura H1/H2 optimizada
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="generateLandingPage()">
+                            <i class="fas fa-magic me-1"></i>Generar Landing Page
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('generateLandingModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('generateLandingModal'));
+    modal.show();
+}
+
+// Función para mostrar/ocultar configuración avanzada
+function toggleAdvancedConfig() {
+    const body = document.getElementById('advancedConfigBody');
+    const icon = document.getElementById('advancedToggleIcon');
+    
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.className = 'fas fa-chevron-up';
+    } else {
+        body.style.display = 'none';
+        icon.className = 'fas fa-chevron-down';
+    }
+}
+
+// Generar landing page con IA
+async function generateLandingPage() {
+    const keywords = document.getElementById('landingKeywords').value.trim();
+    const phone = document.getElementById('landingPhone').value.trim();
+    const aiProvider = document.getElementById('aiProvider').value;
+    const themeCategory = document.getElementById('themeCategory').value;
+    
+    // Nuevos campos opcionales
+    const additionalServices = document.getElementById('additionalServices')?.value || '';
+    const ctaCount = document.getElementById('ctaCount')?.value || '2';
+    const paragraphCount = document.getElementById('paragraphCount')?.value || '3';
+    const writingStyle = document.getElementById('writingStyle')?.value || 'persuasiva';
+    const landingLength = document.getElementById('landingLength')?.value || 'mediana';
+    const includeSliders = document.getElementById('includeSliders')?.value || 'si';
+    const includeSeparators = document.getElementById('includeSeparators')?.value || 'si';
+    const separatorStyle = document.getElementById('separatorStyle')?.value || 'waves';
+    const responsiveMenu = document.getElementById('responsiveMenu')?.value || 'si';
+    const testimonialLength = document.getElementById('testimonialLength')?.value || 'medianos';
+    
+    if (!keywords || !phone) {
+        showAlert('Por favor completa todos los campos obligatorios', 'warning');
+        return;
+    }
+    
+    // Validate phone format
+    const phoneRegex = /^[+]?[0-9\s\-\(\)]{9,}$/;
+    if (!phoneRegex.test(phone)) {
+        showAlert('Por favor ingresa un número de teléfono válido', 'warning');
+        return;
+    }
+    
+    const generateBtn = document.querySelector('#generateLandingModal .btn-primary');
+    const originalText = generateBtn.innerHTML;
+    
+    try {
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generando con IA...';
+        
+        // Mostrar progreso detallado
+        const progressContainer = document.createElement('div');
+        progressContainer.id = 'aiProgressContainer';
+        progressContainer.className = 'mt-3 p-3 bg-light rounded';
+        progressContainer.innerHTML = `
+            <div class="d-flex align-items-center mb-2">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                <span id="progressText">Iniciando generación con IA...</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%"></div>
+            </div>
+        `;
+        
+        const modalBody = document.querySelector('#generateLandingModal .modal-body');
+        modalBody.appendChild(progressContainer);
+        
+        // Simular progreso de IA
+        const updateProgress = (percent, text) => {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressText').textContent = text;
+        };
+        
+        updateProgress(10, `Conectando con ${aiProvider.toUpperCase()}...`);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        updateProgress(30, 'Analizando palabras clave...');
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        updateProgress(50, 'Generando contenido con IA...');
+        
+        // Preparar datos con campos opcionales
+        const requestData = {
+            keywords: keywords,
+            phone_number: phone,
+            ai_provider: aiProvider,
+            theme_category: themeCategory
+        };
+        
+        // Agregar campos opcionales
+        if (additionalServices.trim()) {
+            requestData.additional_services = additionalServices.split('\n').filter(s => s.trim());
+        }
+        
+        requestData.cta_count = parseInt(ctaCount);
+        requestData.paragraph_count = parseInt(paragraphCount);
+        requestData.writing_style = writingStyle;
+        requestData.landing_length = landingLength;
+        requestData.include_sliders = includeSliders === 'si';
+        requestData.include_separators = includeSeparators === 'si';
+        requestData.separator_style = separatorStyle;
+        requestData.responsive_menu = responsiveMenu === 'si';
+        requestData.testimonial_length = testimonialLength;
+        
+        updateProgress(70, 'Procesando respuesta de IA...');
+        
+        const response = await apiRequest('/landings/creador/generate', {
+            method: 'POST',
+            body: JSON.stringify(requestData)
+        });
+        
+        updateProgress(90, 'Construyendo landing page...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (response && response.success) {
+            updateProgress(100, '¡Landing page generada con IA exitosamente!');
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Limpiar indicador de progreso
+            const progressContainer = document.getElementById('aiProgressContainer');
+            if (progressContainer) {
+                progressContainer.remove();
+            }
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('generateLandingModal'));
+            modal.hide();
+            
+            showAlert('Landing page generada exitosamente con IA', 'success');
+            
+            // Reload landing pages
+            loadUserLandingPages();
+            
+            // Show the generated landing in themes tab
+            if (response.html_content) {
+                showGeneratedLandingPreview(response.html_content, response.landing_page);
+            }
+        } else {
+            throw new Error(response.message || 'Error al generar la landing page con IA');
+        }
+    } catch (error) {
+        console.error('Error generating landing page:', error);
+        showAlert(`Error al generar landing page con IA: ${error.message}`, 'danger');
+    } finally {
+        // Limpiar indicador de progreso si existe
+        const progressContainer = document.getElementById('aiProgressContainer');
+        if (progressContainer) {
+            progressContainer.remove();
+        }
+        
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = originalText;
+    }
+}
+
+// Ver landing page
+async function viewLandingPage(landingId) {
+    try {
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}`);
+        
+        if (response && response.landing_page) {
+            const lp = response.landing_page;
+            
+            // Show preview modal
+            const modalHtml = `
+                <div class="modal fade" id="viewLandingModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-eye me-2"></i>${lp.title}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <iframe srcdoc="${lp.html_content.replace(/"/g, '&quot;')}" 
+                                        style="width: 100%; height: 70vh; border: none;"></iframe>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                ${lp.public_url ? `
+                                    <a href="${lp.public_url}" target="_blank" class="btn btn-primary">
+                                        <i class="fas fa-external-link-alt me-1"></i>Ver en Vivo
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal
+            const existingModal = document.getElementById('viewLandingModal');
+            if (existingModal) existingModal.remove();
+            
+            // Add and show modal
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('viewLandingModal'));
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error viewing landing page:', error);
+        showAlert('Error al cargar la landing page', 'danger');
+    }
+}
+
+// Editar landing page
+async function editLandingPage(landingId) {
+    try {
+        showLoading(true);
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}`);
+        
+        if (response && response.landing_page) {
+            const lp = response.landing_page;
+            showEditLandingModal(lp);
+        }
+    } catch (error) {
+        console.error('Error loading landing page for edit:', error);
+        showAlert('Error al cargar la landing page para editar', 'danger');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Mostrar modal de edición
+function showEditLandingModal(landingPage) {
+    const modalHtml = `
+        <div class="modal fade" id="editLandingModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>Editar Landing Page
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Pestañas de navegación -->
+                        <ul class="nav nav-tabs" id="editLandingTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-pane" type="button" role="tab">
+                                    <i class="fas fa-cog me-1"></i>Configuración Básica
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="css-tab" data-bs-toggle="tab" data-bs-target="#css-pane" type="button" role="tab">
+                                    <i class="fab fa-css3-alt me-1"></i>CSS Personalizado
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-pane" type="button" role="tab">
+                                    <i class="fab fa-html5 me-1"></i>HTML Personalizado
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <!-- Contenido de las pestañas -->
+                        <div class="tab-content" id="editLandingTabContent">
+                            <!-- Pestaña de Configuración Básica -->
+                            <div class="tab-pane fade show active" id="basic-pane" role="tabpanel">
+                                <form id="editLandingForm" class="mt-3">
+                                    <div class="mb-3">
+                                        <label for="editTitle" class="form-label">
+                                            <i class="fas fa-heading me-1"></i>Título *
+                                        </label>
+                                        <input type="text" class="form-control" id="editTitle" 
+                                               value="${landingPage.title}" required maxlength="200">
+                                        <div class="form-text d-flex justify-content-between">
+                                            <span>Título principal de la landing page</span>
+                                            <span id="titleCounter" class="text-muted">0/200</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="editDescription" class="form-label">
+                                            <i class="fas fa-align-left me-1"></i>Descripción
+                                        </label>
+                                        <textarea class="form-control" id="editDescription" rows="3" maxlength="500">${landingPage.seo_description || ''}</textarea>
+                                        <div class="form-text d-flex justify-content-between">
+                                            <span>Descripción general de la landing page</span>
+                                            <span id="descriptionCounter" class="text-muted">0/500</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="editSeoTitle" class="form-label">
+                                            <i class="fas fa-search me-1"></i>Título SEO
+                                        </label>
+                                        <input type="text" class="form-control" id="editSeoTitle" 
+                                               value="${landingPage.seo_title || ''}" maxlength="60">
+                                        <div class="form-text d-flex justify-content-between">
+                                            <span>Título optimizado para motores de búsqueda</span>
+                                            <span id="seoTitleCounter" class="text-muted">0/60</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="editSeoKeywords" class="form-label">
+                                            <i class="fas fa-key me-1"></i>Keywords SEO
+                                        </label>
+                                        <input type="text" class="form-control" id="editSeoKeywords" 
+                                               value="${landingPage.seo_keywords || ''}" maxlength="500">
+                                        <div class="form-text d-flex justify-content-between">
+                                            <span>Separa múltiples keywords con comas</span>
+                                            <span id="seoKeywordsCounter" class="text-muted">0/500</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="editIsActive" 
+                                                   ${landingPage.is_active ? 'checked' : ''}>
+                                            <label class="form-check-label" for="editIsActive">
+                                                Landing page activa
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Pestaña de CSS Personalizado -->
+                            <div class="tab-pane fade" id="css-pane" role="tabpanel">
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="editCustomCSS" class="form-label mb-0">
+                                            <i class="fab fa-css3-alt me-1"></i>CSS Personalizado para esta Landing Page
+                                        </label>
+                                        <small class="text-muted">Este CSS se aplicará solo a esta landing page</small>
+                                    </div>
+                                    <textarea class="form-control font-monospace" id="editCustomCSS" rows="20" 
+                                              placeholder="/* Escribe tu CSS personalizado aquí */\n/* Ejemplo: */\n.mi-clase-personalizada {\n    color: #ff6b6b;\n    font-size: 18px;\n}">${landingPage.css_content || ''}</textarea>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Puedes usar cualquier CSS válido. Este código se aplicará únicamente a esta landing page.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pestaña de HTML Personalizado -->
+                            <div class="tab-pane fade" id="html-pane" role="tabpanel">
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="editCustomHTML" class="form-label mb-0">
+                                            <i class="fab fa-html5 me-1"></i>HTML Personalizado para esta Landing Page
+                                        </label>
+                                        <small class="text-muted">Edita el HTML completo de esta landing page</small>
+                                    </div>
+                                    <div class="alert alert-warning" role="alert">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        <strong>¡Cuidado!</strong> Editar el HTML puede afectar el funcionamiento de la landing page. 
+                                        Asegúrate de mantener una estructura HTML válida.
+                                    </div>
+                                    <textarea class="form-control font-monospace" id="editCustomHTML" rows="20" 
+                                              placeholder="<!DOCTYPE html>\n<html lang='es'>\n<head>\n    <meta charset='UTF-8'>\n    <title>Mi Landing Page</title>\n</head>\n<body>\n    <!-- Tu contenido aquí -->\n</body>\n</html>">${landingPage.html_content || ''}</textarea>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Si dejas este campo vacío, se usará el HTML generado automáticamente.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="updateLandingPage(${landingPage.id})">
+                            <i class="fas fa-save me-1"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('editLandingModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editLandingModal'));
+    modal.show();
+    
+    // Setup character counters after modal is shown
+    modal._element.addEventListener('shown.bs.modal', function() {
+        setupCharacterCounters();
+    });
+}
+
+// Setup character counters for form fields
+function setupCharacterCounters() {
+    const fields = [
+        { id: 'editTitle', counterId: 'titleCounter', maxLength: 200 },
+        { id: 'editDescription', counterId: 'descriptionCounter', maxLength: 500 },
+        { id: 'editSeoTitle', counterId: 'seoTitleCounter', maxLength: 60 },
+        { id: 'editSeoKeywords', counterId: 'seoKeywordsCounter', maxLength: 500 }
+    ];
+    
+    fields.forEach(field => {
+        const input = document.getElementById(field.id);
+        const counter = document.getElementById(field.counterId);
+        
+        if (input && counter) {
+            // Update counter initially
+            updateCounter(input, counter, field.maxLength);
+            
+            // Add event listeners for real-time updates
+            input.addEventListener('input', () => {
+                updateCounter(input, counter, field.maxLength);
+            });
+            
+            input.addEventListener('keyup', () => {
+                updateCounter(input, counter, field.maxLength);
+            });
+        }
+    });
+}
+
+// Update character counter
+function updateCounter(input, counter, maxLength) {
+    const currentLength = input.value.length;
+    counter.textContent = `${currentLength}/${maxLength}`;
+    
+    // Change color based on usage
+    if (currentLength > maxLength * 0.9) {
+        counter.className = 'text-warning';
+    } else if (currentLength >= maxLength) {
+        counter.className = 'text-danger';
+    } else {
+        counter.className = 'text-muted';
+    }
+}
+
+// Actualizar landing page
+async function updateLandingPage(landingId) {
+    const title = document.getElementById('editTitle').value.trim();
+    const description = document.getElementById('editDescription').value.trim();
+    const seoTitle = document.getElementById('editSeoTitle').value.trim();
+    const seoKeywords = document.getElementById('editSeoKeywords').value.trim();
+    const isActive = document.getElementById('editIsActive').checked;
+    const customCSS = document.getElementById('editCustomCSS').value.trim();
+    const customHTML = document.getElementById('editCustomHTML').value.trim();
+    
+    // Validaciones de campos requeridos y límites
+    if (!title) {
+        showAlert('El título es requerido', 'warning');
+        return;
+    }
+    
+    if (title.length > 200) {
+        showAlert('El título no puede exceder 200 caracteres', 'warning');
+        return;
+    }
+    
+    if (description && description.length > 500) {
+        showAlert('La descripción no puede exceder 500 caracteres', 'warning');
+        return;
+    }
+    
+    if (seoTitle && seoTitle.length > 60) {
+        showAlert('El título SEO no puede exceder 60 caracteres', 'warning');
+        return;
+    }
+    
+    if (seoKeywords && seoKeywords.length > 500) {
+        showAlert('Las keywords SEO no pueden exceder 500 caracteres', 'warning');
+        return;
+    }
+    
+    const updateBtn = document.querySelector('#editLandingModal .btn-primary');
+    const originalText = updateBtn.innerHTML;
+    
+    try {
+        // Debug: Check token status before making request
+        const token = localStorage.getItem('authToken');
+        console.log('updateLandingPage - Token check:', token ? 'EXISTS' : 'NULL');
+        console.log('updateLandingPage - authToken variable:', authToken ? 'EXISTS' : 'NULL');
+        
+        if (!token) {
+            showAlert('No hay token de autenticación. Por favor, inicia sesión nuevamente.', 'warning');
+            logout();
+            return;
+        }
+        
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Guardando...';
+        
+        const requestData = {
+            title: title,
+            seo_description: description,
+            seo_title: seoTitle,
+            seo_keywords: seoKeywords,
+            is_active: isActive,
+            css_content: customCSS || null,
+            html_content: customHTML || null
+        };
+        
+        console.log('updateLandingPage - Request data:', requestData);
+        
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}`, {
+            method: 'PUT',
+            body: JSON.stringify(requestData)
+        });
+        
+        if (response && response.success) {
+            showAlert('Landing page actualizada exitosamente', 'success');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editLandingModal'));
+            modal.hide();
+            
+            // Reload landing pages
+            loadUserLandingPages();
+        }
+        
+    } catch (error) {
+        console.error('Error updating landing page:', error);
+        showAlert('Error al actualizar la landing page', 'danger');
+    } finally {
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalText;
+    }
+}
+
+// Publicar landing page
+async function publishLandingPage(landingId) {
+    if (!confirm('¿Estás seguro de que quieres publicar esta landing page?')) {
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}/publish`, {
+            method: 'PUT'
+        });
+        
+        if (response && response.success) {
+            const landingPage = response.landing_page;
+            const publicUrl = `${window.location.origin}/landing/${landingPage.slug}`;
+            showAlert(`Landing page publicada exitosamente. URL: <a href="${publicUrl}" target="_blank" class="text-white">${publicUrl}</a>`, 'success');
+            loadUserLandingPages();
+        }
+    } catch (error) {
+        console.error('Error publishing landing page:', error);
+        showAlert('Error al publicar la landing page', 'danger');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Despublicar landing page
+async function unpublishLandingPage(landingId) {
+    if (!confirm('¿Estás seguro de que quieres despublicar esta landing page?')) {
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}/unpublish`, {
+            method: 'PUT'
+        });
+        
+        if (response && response.success) {
+            showAlert('Landing page despublicada exitosamente', 'success');
+            loadUserLandingPages();
+        }
+    } catch (error) {
+        console.error('Error unpublishing landing page:', error);
+        showAlert('Error al despublicar la landing page', 'danger');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Eliminar landing page
+async function deleteLandingPage(landingId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta landing page? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response && response.success) {
+            showAlert('Landing page eliminada exitosamente', 'success');
+            loadUserLandingPages();
+        }
+    } catch (error) {
+        console.error('Error deleting landing page:', error);
+        showAlert('Error al eliminar la landing page', 'danger');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ===== SEO FUNCTIONS =====
+
+function loadSeoTools() {
+    const container = document.getElementById('seo');
+    
+    const html = `
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <h5><i class="fas fa-search me-2"></i>Optimización SEO</h5>
+                    <p class="text-muted">Herramientas para analizar y optimizar el SEO de tus landing pages.</p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Próximamente:</strong> Análisis SEO automático, sugerencias de keywords, y optimización de contenido.
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// ===== THEMES FUNCTIONS =====
+
+async function loadThemesAndTemplates() {
+    const container = document.getElementById('temas');
+    
+    try {
+        // Load themes and landing pages
+        const [themesResponse, landingsResponse] = await Promise.all([
+            apiRequest('/themes'),
+            apiRequest('/landings/creador/landing-pages')
+        ]);
+        
+        // El API de temas devuelve directamente un array, no un objeto con propiedad themes
+        const themes = Array.isArray(themesResponse) ? themesResponse : (themesResponse?.themes || []);
+        const landingPages = landingsResponse?.landing_pages || [];
+        
+        const html = `
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <h5><i class="fas fa-palette me-2"></i>Temas Esotéricos</h5>
+                        <p class="text-muted">Aplica temas místicos y esotéricos a tus landing pages.</p>
+                        
+                        <!-- Available Themes -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-magic me-2"></i>Temas Disponibles</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row" id="themesContainer">
+                                    ${themes.map(theme => `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card theme-card ${theme.is_default ? 'border-primary' : ''}" data-theme-id="${theme.id}">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h6 class="card-title mb-0">${theme.display_name}</h6>
+                                                        ${theme.is_default ? '<span class="badge bg-primary">Por Defecto</span>' : ''}
+                                                    </div>
+                                                    <p class="card-text text-muted small">${theme.description}</p>
+                                                    <div class="mb-2">
+                                                        <span class="badge bg-secondary">${theme.category}</span>
+                                                    </div>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="selectTheme(${theme.id}, '${theme.display_name}')">
+                                                        <i class="fas fa-check me-1"></i>Seleccionar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme Application -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-wand-magic me-2"></i>Aplicar Tema</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="selectedTheme" class="form-label">Tema Seleccionado</label>
+                                            <input type="text" class="form-control" id="selectedTheme" readonly placeholder="Selecciona un tema">
+                                            <input type="hidden" id="selectedThemeId">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="targetLandingPage" class="form-label">Landing Page</label>
+                                            <select class="form-select" id="targetLandingPage">
+                                                <option value="">Selecciona una landing page</option>
+                                                ${landingPages.map(lp => `
+                                                    <option value="${lp.id}">${lp.title} ${lp.is_published ? '(Publicada)' : '(Borrador)'}</option>
+                                                `).join('')}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" onclick="applyThemeToLandingPage()">
+                                        <i class="fas fa-magic me-1"></i>Aplicar Tema
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="previewTheme()">
+                                        <i class="fas fa-eye me-1"></i>Vista Previa
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme Info -->
+                        <div class="card mt-4" id="themeInfoCard" style="display: none;">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información del Tema</h6>
+                            </div>
+                            <div class="card-body" id="themeInfoContent">
+                                <!-- Theme details will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading themes:', error);
+        container.innerHTML = `
+            <div class="container-fluid">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error al cargar los temas. Por favor, intenta de nuevo.
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Select theme function
+function selectTheme(themeId, themeName) {
+    document.getElementById('selectedTheme').value = themeName;
+    document.getElementById('selectedThemeId').value = themeId;
+    
+    // Update visual selection
+    document.querySelectorAll('.theme-card').forEach(card => {
+        card.classList.remove('border-success');
+    });
+    
+    const selectedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('border-success');
+    }
+    
+    // Load theme info
+    loadThemeInfo(themeId);
+}
+
+// Load theme information
+async function loadThemeInfo(themeId) {
+    try {
+        const response = await apiRequest(`/themes/${themeId}`);
+        if (response && response.theme) {
+            const theme = response.theme;
+            const infoCard = document.getElementById('themeInfoCard');
+            const infoContent = document.getElementById('themeInfoContent');
+            
+            infoContent.innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>${theme.display_name}</h6>
+                        <p class="text-muted">${theme.description}</p>
+                        <div class="mb-2">
+                            <strong>Categoría:</strong> <span class="badge bg-secondary">${theme.category}</span>
+                        </div>
+                        ${theme.theme_variables ? `
+                            <div class="mb-2">
+                                <strong>Variables del tema:</strong>
+                                <ul class="list-unstyled ms-3">
+                                    ${Object.entries(JSON.parse(theme.theme_variables)).map(([key, value]) => `
+                                        <li><code>${key}</code>: ${value}</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-end">
+                            <small class="text-muted">Creado: ${new Date(theme.created_at).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            infoCard.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading theme info:', error);
+    }
+}
+
+// Apply theme to landing page
+async function applyThemeToLandingPage() {
+    const themeId = document.getElementById('selectedThemeId').value;
+    const landingPageId = document.getElementById('targetLandingPage').value;
+    
+    if (!themeId || !landingPageId) {
+        showAlert('Por favor selecciona un tema y una landing page', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await apiRequest(`/themes/apply`, {
+            method: 'POST',
+            body: JSON.stringify({
+                theme_id: parseInt(themeId),
+                landing_page_id: parseInt(landingPageId)
+            })
+        });
+        
+        if (response && response.success) {
+            showAlert('Tema aplicado exitosamente', 'success');
+            // Refresh landing pages list
+            loadLandings();
+        } else {
+            showAlert('Error al aplicar el tema', 'danger');
+        }
+    } catch (error) {
+        console.error('Error applying theme:', error);
+        showAlert('Error al aplicar el tema', 'danger');
+    }
+}
+
+// Preview theme (placeholder for future implementation)
+function previewTheme() {
+    const themeId = document.getElementById('selectedThemeId').value;
+    const landingPageId = document.getElementById('targetLandingPage').value;
+    
+    if (!themeId || !landingPageId) {
+        showAlert('Por favor selecciona un tema y una landing page para la vista previa', 'warning');
+        return;
+    }
+    
+    showAlert('Vista previa del tema - Funcionalidad en desarrollo', 'info');
+}
+
+// Mostrar vista previa de landing generada
+function showGeneratedLandingPreview(htmlContent, landingPageData) {
+    // Switch to themes tab
+    const temasTab = document.getElementById('temas-tab');
+    if (temasTab) {
+        temasTab.click();
+    }
+    
+    setTimeout(() => {
+        const container = document.getElementById('generatedLandingsContainer');
+        
+        const html = `
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-magic me-2"></i>Landing Page Generada: ${landingPageData.title}
+                    </h6>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="downloadLandingHTML(${landingPageData.id})">
+                            <i class="fas fa-download me-1"></i>Descargar HTML
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="viewLandingPage(${landingPageData.id})">
+                            <i class="fas fa-external-link-alt me-1"></i>Ver Completa
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <iframe srcdoc="${htmlContent.replace(/"/g, '&quot;')}" 
+                            style="width: 100%; height: 600px; border: none; border-radius: 0 0 0.375rem 0.375rem;"></iframe>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+    }, 500);
+}
+
+// Descargar HTML de landing page
+async function downloadLandingHTML(landingId) {
+    try {
+        const response = await apiRequest(`/landings/creador/landing-pages/${landingId}`);
+        
+        if (response && response.landing_page) {
+            const lp = response.landing_page;
+            const blob = new Blob([lp.html_content], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${lp.slug || 'landing-page'}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('HTML descargado exitosamente', 'success');
+        }
+    } catch (error) {
+        console.error('Error downloading HTML:', error);
+        showAlert('Error al descargar el HTML', 'danger');
+    }
 }
 
 // Navigation Functions
@@ -540,6 +1820,12 @@ function showSection(sectionName) {
         case 'landings':
             loadLandings();
             break;
+        case 'creador':
+            loadCreadorSection();
+            break;
+        case 'temas':
+            loadThemesAndTemplates();
+            break;
         case 'settings':
             initializeApiSettings();
             break;
@@ -559,26 +1845,103 @@ function restoreActiveSection() {
 }
 
 // Utility Functions
+// Función para verificar si el token está próximo a expirar
+function isTokenExpiringSoon(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const exp = payload.exp * 1000; // Convertir a milisegundos
+        const now = Date.now();
+        const timeUntilExpiry = exp - now;
+        
+        // Si expira en menos de 5 minutos (300000 ms), considerarlo próximo a expirar
+        return timeUntilExpiry < 300000;
+    } catch (error) {
+        console.error('Error parsing token:', error);
+        return true; // Si no se puede parsear, asumir que está expirado
+    }
+}
+
+// Función para verificar la validez del token
+async function verifyToken() {
+    const token = localStorage.getItem('authToken');
+    if (!token) return false;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-token`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        return response.ok;
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        return false;
+    }
+}
+
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    const token = localStorage.getItem('authToken');
+    
+    console.log('apiRequest - endpoint:', endpoint);
+    console.log('apiRequest - token from localStorage:', token ? 'EXISTS' : 'NULL');
+    console.log('apiRequest - authToken variable:', authToken ? 'EXISTS' : 'NULL');
+    
+    if (!token) {
+        console.error('No auth token found, redirecting to login');
+        console.log('localStorage contents:', localStorage);
+        showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
+        logout();
+        return null;
+    }
+    
+    // Verificar si el token está próximo a expirar
+    if (isTokenExpiringSoon(token)) {
+        console.warn('Token is expiring soon');
+        const isValid = await verifyToken();
+        if (!isValid) {
+            showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
+            logout();
+            return null;
+        }
+    }
+    
+    // Update global authToken variable
+    authToken = token;
+    
     const defaultOptions = {
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
+            'Authorization': `Bearer ${token}`
         }
     };
     
-    const finalOptions = { ...defaultOptions, ...options };
+    // Merge headers properly to avoid overwriting Authorization
+    const mergedHeaders = { ...defaultOptions.headers, ...(options.headers || {}) };
+    const finalOptions = { ...defaultOptions, ...options, headers: mergedHeaders };
+    
+    console.log('apiRequest - final headers:', finalOptions.headers);
     
     try {
         const response = await fetch(url, finalOptions);
         
         if (response.status === 401) {
+            showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
             logout();
             return null;
         }
         
         if (!response.ok) {
+            // Manejar errores específicos
+            if (response.status === 403) {
+                showAlert('No tienes permisos para realizar esta acción.', 'danger');
+            } else if (response.status >= 500) {
+                showAlert('Error del servidor. Por favor, intenta nuevamente.', 'danger');
+            } else {
+                showAlert(`Error en la petición: ${response.status}`, 'danger');
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -590,6 +1953,9 @@ async function apiRequest(endpoint, options = {}) {
         }
     } catch (error) {
         console.error('API request error:', error);
+        if (error.message.includes('Failed to fetch')) {
+            showAlert('Error de conexión. Verifica tu conexión a internet.', 'danger');
+        }
         throw error;
     }
 }
