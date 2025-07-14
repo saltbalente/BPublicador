@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, users, security, publication, templates, visual_config
+from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, users, security, publication, templates, visual_config, landings
 
 api_router = APIRouter()
 
@@ -91,4 +91,10 @@ api_router.include_router(
     visual_config.router,
     prefix="/visual-config",
     tags=["configuración-visual"]
+)
+
+api_router.include_router(
+    landings.router,
+    prefix="/landings",
+    tags=["landing-pages"]
 )

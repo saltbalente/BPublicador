@@ -19,4 +19,5 @@ class User(Base):
     content_items = relationship("Content", back_populates="user")
     image_configs = relationship("ImageConfig", back_populates="user")
     manual_images = relationship("ManualImage", back_populates="user")
+    landing_pages = relationship("LandingPage", back_populates="user")
     # usage_stats = relationship("UsageStats", back_populates="user")
