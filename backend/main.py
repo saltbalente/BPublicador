@@ -621,8 +621,47 @@ async def get_public_landing_page(slug: str, request: Request, db: Session = Dep
         service = LandingPageService(db)
         landing_page = service.get_landing_page_by_slug(slug)
         
-        # Retornar el HTML de la landing page directamente
-        return HTMLResponse(content=landing_page.html_content)
+        # Si tiene HTML personalizado, usarlo directamente
+        if landing_page.html_content and landing_page.html_content.strip():
+            html_content = landing_page.html_content
+            
+            # Si también tiene CSS personalizado, inyectarlo en el HTML
+            if landing_page.css_content and landing_page.css_content.strip():
+                # Buscar si ya tiene una etiqueta </head> para insertar el CSS antes
+                if '</head>' in html_content:
+                    custom_css = f"<style>\n{landing_page.css_content}\n</style>\n</head>"
+                    html_content = html_content.replace('</head>', custom_css)
+                else:
+                    # Si no tiene estructura HTML completa, agregar el CSS al inicio
+                    html_content = f"<style>\n{landing_page.css_content}\n</style>\n{html_content}"
+            
+            return HTMLResponse(content=html_content)
+        
+        # Si no tiene HTML personalizado, generar dinámicamente
+        # (esto mantiene compatibilidad con landing pages generadas automáticamente)
+        else:
+            # Aquí podrías llamar al generador de landing pages para crear el HTML dinámicamente
+            # Por ahora, retornamos un mensaje indicando que no hay contenido personalizado
+            fallback_html = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{landing_page.title}</title>
+                <meta name="description" content="{landing_page.seo_description or ''}">
+                {f'<style>{landing_page.css_content}</style>' if landing_page.css_content else ''}
+            </head>
+            <body>
+                <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+                    <h1>{landing_page.title}</h1>
+                    <p>{landing_page.seo_description or 'Landing page en construcción'}</p>
+                    <p><em>Esta landing page aún no tiene contenido HTML personalizado.</em></p>
+                </div>
+            </body>
+            </html>
+            """
+            return HTMLResponse(content=fallback_html)
         
     except Exception as e:
         raise HTTPException(status_code=404, detail="Landing page no encontrada")

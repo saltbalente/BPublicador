@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.api.dependencies import get_current_active_user
 from app.models.user import User
 from app.services.landing_generator import LandingPageGenerator
+from app.schemas.landing import LandingPageUpdate as LandingPageUpdateSchema
 from pydantic import BaseModel
 
 # Router para las funcionalidades de Landing Pages
@@ -24,15 +25,7 @@ class LandingPageCreate(BaseModel):
     seo_description: Optional[str] = None
     seo_keywords: Optional[str] = None
 
-class LandingPageUpdate(BaseModel):
-    """Modelo para actualizar una landing page"""
-    title: Optional[str] = None
-    description: Optional[str] = None
-    template_id: Optional[int] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
-    seo_keywords: Optional[str] = None
-    is_active: Optional[bool] = None
+# LandingPageUpdate ahora se importa desde schemas.landing
 
 class TemplateCreate(BaseModel):
     """Modelo para crear un nuevo template"""
@@ -49,6 +42,18 @@ class LandingGenerateRequest(BaseModel):
     phone_number: str
     ai_provider: Optional[str] = "openai"
     theme_category: Optional[str] = "general"
+    
+    # Nuevos campos opcionales
+    additional_services: Optional[List[str]] = None
+    cta_count: Optional[int] = 2
+    paragraph_count: Optional[int] = 3
+    writing_style: Optional[str] = "persuasiva"
+    landing_length: Optional[str] = "mediana"
+    include_sliders: Optional[bool] = True
+    include_separators: Optional[bool] = True
+    separator_style: Optional[str] = "waves"
+    responsive_menu: Optional[bool] = True
+    testimonial_length: Optional[str] = "medianos"
 
 # ============================================================================
 # ENDPOINTS PARA CREADOR DE LANDING PAGES
@@ -144,13 +149,34 @@ async def generate_landing_page_with_ai(
             keywords=request.keywords,
             phone_number=request.phone_number,
             ai_provider=request.ai_provider,
-            theme_category=request.theme_category
+            theme_category=request.theme_category,
+            additional_services=request.additional_services,
+            cta_count=request.cta_count,
+            paragraph_count=request.paragraph_count,
+            writing_style=request.writing_style,
+            landing_length=request.landing_length,
+            include_sliders=request.include_sliders,
+            include_separators=request.include_separators,
+            separator_style=request.separator_style,
+            responsive_menu=request.responsive_menu,
+            testimonial_length=request.testimonial_length
         )
         
         return {
             "success": True,
             "message": "Landing page generada exitosamente",
-            "data": result
+            "landing_page_id": result["landing_page_id"],
+            "slug": result["slug"],
+            "html_content": result["html_content"],
+            "css_content": result["css_content"],
+            "js_content": result["js_content"],
+            "preview_url": result["preview_url"],
+            "seo_data": result["seo_data"],
+            "landing_page": {
+                "id": result["landing_page_id"],
+                "slug": result["slug"],
+                "preview_url": result["preview_url"]
+            }
         }
         
     except HTTPException:
@@ -264,7 +290,7 @@ async def get_landing_page_details(
 @router.put("/creador/landing-pages/{landing_id}", response_model=None)
 async def update_landing_page(
     landing_id: int,
-    update_data: LandingPageUpdate,
+    update_data: LandingPageUpdateSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
