@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, users, security, publication, templates, visual_config, landings
+from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, users, security, publication, templates, visual_config, landings, themes
 
 api_router = APIRouter()
 
@@ -97,4 +97,10 @@ api_router.include_router(
     landings.router,
     prefix="/landings",
     tags=["landing-pages"]
+)
+
+api_router.include_router(
+    themes.router,
+    prefix="/themes",
+    tags=["temas"]
 )

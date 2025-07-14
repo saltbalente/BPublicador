@@ -612,6 +612,21 @@ async def landing_page():
     """Página de aterrizaje principal"""
     return RedirectResponse(url="/inicio/", status_code=302)
 
+@app.get("/landing/{slug}", response_class=HTMLResponse)
+async def get_public_landing_page(slug: str, request: Request, db: Session = Depends(get_db)):
+    """Mostrar landing page pública por slug"""
+    try:
+        from app.services.landing_service import LandingPageService
+        
+        service = LandingPageService(db)
+        landing_page = service.get_landing_page_by_slug(slug)
+        
+        # Retornar el HTML de la landing page directamente
+        return HTMLResponse(content=landing_page.html_content)
+        
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Landing page no encontrada")
+
 @app.get("/content/{slug}", response_class=HTMLResponse, response_model=None)
 async def get_public_content(slug: str, request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     """Servir contenido público por slug usando el sistema de templates"""
@@ -696,3 +711,7 @@ def ready():
 def healthz():
     """Endpoint de health check compatible con Kubernetes/Railway"""
     return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)

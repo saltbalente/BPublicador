@@ -39,6 +39,7 @@ class LandingPage(Base):
     # Relaciones
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     template_id = Column(Integer, ForeignKey("landing_templates.id"), nullable=True)
+    theme_id = Column(Integer, ForeignKey("themes.id"), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
@@ -48,6 +49,7 @@ class LandingPage(Base):
     # Relaciones ORM
     user = relationship("User", back_populates="landing_pages")
     template = relationship("LandingTemplate", back_populates="landing_pages")
+    theme = relationship("Theme", back_populates="landing_pages")
     analytics = relationship("LandingAnalytics", back_populates="landing_page", cascade="all, delete-orphan")
     
     def __repr__(self):

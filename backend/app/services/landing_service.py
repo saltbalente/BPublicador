@@ -188,7 +188,7 @@ class LandingPageService:
             "html_content": template.html_template,
             "css_content": template.css_template,
             "js_content": template.js_template,
-            "settings": {**template.default_settings or {}, **landing_data.get("settings", {})},
+            "settings": {**(template.default_settings or {}), **landing_data.get("settings", {})},
             "template_id": template_id
         }
         
