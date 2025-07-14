@@ -2430,3 +2430,444 @@ function insertAtCursor(textareaId, text) {
 // Make functions globally available
 window.triggerImageUpload = triggerImageUpload;
 window.handleImageUpload = handleImageUpload;
+
+// Image Gallery Modal Functions
+let currentGalleryImages = [];
+let selectedImageData = null;
+let currentPage = 1;
+const imagesPerPage = 12;
+
+function openImageGalleryModal() {
+    const modal = new bootstrap.Modal(document.getElementById('imageGalleryModal'));
+    modal.show();
+    
+    // Load images when modal opens
+    loadGalleryImages();
+    
+    // Setup search functionality
+    setupImageSearch();
+}
+
+function setupImageSearch() {
+    const searchInput = document.getElementById('imageSearchInput');
+    const filterSelect = document.getElementById('imageFilterType');
+    
+    // Debounce search input
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadGalleryImages();
+        }, 300);
+    });
+    
+    // Filter change
+    filterSelect.addEventListener('change', () => {
+        currentPage = 1;
+        loadGalleryImages();
+    });
+}
+
+async function loadGalleryImages() {
+    const galleryContainer = document.getElementById('modalImageGallery');
+    const searchTerm = document.getElementById('imageSearchInput').value.toLowerCase();
+    const filterType = document.getElementById('imageFilterType').value;
+    
+    // Show loading
+    galleryContainer.innerHTML = `
+        <div class="col-12 text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando imágenes...</span>
+            </div>
+        </div>
+    `;
+    
+    try {
+        // Load all images from the unified endpoint
+        const response = await fetch('/api/v1/image-generation/images', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        
+        let allImages = [];
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Raw image data from API:', data); // Debug log
+            
+            allImages = data.images.map(img => {
+                console.log(`Processing image: ${img.id}, Type: ${img.type}, Path: ${img.image_path}, File exists: ${img.file_exists}`); // Debug log
+                
+                // Extract filename from image_path
+                const filename = img.image_path ? img.image_path.split('/').pop() : 'unknown.png';
+                
+                // Construct URL based on image type and path
+                let url;
+                
+                if (img.type === 'content') {
+                    // Content images are served from static directory
+                    if (img.image_path && img.image_path.startsWith('static/')) {
+                        url = `/${img.image_path}`;
+                    } else if (img.image_path && img.image_path.startsWith('images/generated/')) {
+                        url = `/static/${img.image_path}`;
+                    } else {
+                        // Default for content images
+                        url = `/static/images/generated/${filename}`;
+                    }
+                } else if (img.type === 'manual') {
+                    // Manual images are always served through the API endpoint
+                    url = `/api/v1/image-generation/manual-images/${filename}`;
+                } else {
+                    // Fallback for unknown types
+                    url = `/api/v1/image-generation/manual-images/${filename}`;
+                }
+                
+                console.log(`Final URL for ${img.id}: ${url}`); // Debug log
+                
+                return {
+                    ...img,
+                    url: url,
+                    filename: filename,
+                    displayName: img.prompt_used ? img.prompt_used.substring(0, 30) + '...' : (img.alt_text || filename),
+                    displayType: img.type // Keep original type for display
+                };
+            });
+        }
+        
+        // Filter images
+        let filteredImages = allImages;
+        
+        if (filterType !== 'all') {
+            filteredImages = allImages.filter(img => {
+                if (filterType === 'generated') {
+                    return img.displayType === 'manual' || img.displayType === 'content';
+                } else if (filterType === 'manual') {
+                    return img.displayType === 'uploaded';
+                }
+                return img.displayType === filterType;
+            });
+        }
+        
+        if (searchTerm) {
+            filteredImages = filteredImages.filter(img => 
+                img.displayName.toLowerCase().includes(searchTerm) ||
+                (img.prompt && img.prompt.toLowerCase().includes(searchTerm))
+            );
+        }
+        
+        currentGalleryImages = filteredImages;
+        
+        // Paginate
+        const startIndex = (currentPage - 1) * imagesPerPage;
+        const endIndex = startIndex + imagesPerPage;
+        const paginatedImages = filteredImages.slice(startIndex, endIndex);
+        
+        displayGalleryImages(paginatedImages);
+        setupPagination(filteredImages.length);
+        
+    } catch (error) {
+        console.error('Error loading gallery images:', error);
+        galleryContainer.innerHTML = `
+            <div class="col-12">
+                <div class="gallery-empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h5>Error al cargar imágenes</h5>
+                    <p>No se pudieron cargar las imágenes. Inténtalo de nuevo.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function displayGalleryImages(images) {
+    const galleryContainer = document.getElementById('modalImageGallery');
+    
+    if (images.length === 0) {
+        galleryContainer.innerHTML = `
+            <div class="col-12">
+                <div class="gallery-empty-state">
+                    <i class="fas fa-images"></i>
+                    <h5>No se encontraron imágenes</h5>
+                    <p>No hay imágenes que coincidan con tu búsqueda.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    galleryContainer.innerHTML = `
+        <div class="image-gallery-grid">
+            ${images.map(img => `
+                <div class="gallery-image-item" onclick="selectGalleryImage('${img.url}', '${img.displayName}', '${img.displayType}')">
+                    <img src="${img.url}" alt="${img.displayName}" loading="lazy">
+                    <div class="gallery-image-overlay">
+                        <div class="gallery-image-info">
+                            <div class="gallery-image-name">${img.displayName}</div>
+                            <div class="gallery-image-type">${img.style === 'uploaded' ? 'Imagen subida' : (img.displayType === 'manual' ? 'Generada por IA' : 'Imagen de contenido')}</div>
+                        </div>
+                    </div>
+                    <div class="gallery-image-actions">
+                        <button class="gallery-action-btn preview" onclick="event.stopPropagation(); previewImage('${img.url}', '${img.displayName}')" title="Vista previa">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="gallery-action-btn delete" onclick="event.stopPropagation(); confirmDeleteImage('${img.url}', '${img.filename}', '${img.displayType}')" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function setupPagination(totalImages) {
+    const paginationContainer = document.getElementById('imagePagination');
+    const totalPages = Math.ceil(totalImages / imagesPerPage);
+    
+    if (totalPages <= 1) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    paginationContainer.style.display = 'block';
+    
+    let paginationHtml = '';
+    
+    // Previous button
+    paginationHtml += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+    `;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            paginationHtml += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+    
+    // Next button
+    paginationHtml += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+    
+    paginationContainer.querySelector('.pagination').innerHTML = paginationHtml;
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(currentGalleryImages.length / imagesPerPage);
+    if (page < 1 || page > totalPages) return;
+    
+    currentPage = page;
+    
+    const startIndex = (currentPage - 1) * imagesPerPage;
+    const endIndex = startIndex + imagesPerPage;
+    const paginatedImages = currentGalleryImages.slice(startIndex, endIndex);
+    
+    displayGalleryImages(paginatedImages);
+    setupPagination(currentGalleryImages.length);
+}
+
+function selectGalleryImage(imageUrl, imageName, imageType) {
+    // Get article title for automatic alt and title generation
+    const fullTitle = document.getElementById('contentTitle')?.value || 'Artículo';
+    
+    // Extract key concepts from title
+    const extractKeyWords = (title) => {
+        const commonWords = ['el', 'la', 'los', 'las', 'un', 'una', 'de', 'del', 'en', 'con', 'por', 'para', 'que', 'como', 'y', 'o', 'pero', 'si', 'no', 'es', 'son', 'está', 'están', 'tiene', 'tienen', 'hace', 'hacen', 'puede', 'pueden', 'debe', 'deben', 'será', 'serán', 'fue', 'fueron', 'ha', 'han', 'había', 'habían', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'must'];
+        
+        return title
+            .toLowerCase()
+            .split(' ')
+            .filter(word => word.length > 2 && !commonWords.includes(word))
+            .slice(0, 4)
+            .join(' ');
+    };
+    
+    const keyWords = extractKeyWords(fullTitle);
+    const shortTitle = keyWords || fullTitle.substring(0, 30) + (fullTitle.length > 30 ? '...' : '');
+    
+    const imageAlt = `Imagen sobre ${shortTitle}`;
+    const imageTitle = `Ilustración: ${shortTitle}`;
+    
+    const imageHtml = `\n\n<img src="${imageUrl}" alt="${imageAlt}" title="${imageTitle}" class="content-image">\n\n`;
+    
+    // Insert image at cursor position
+    insertAtCursor('contentBody', imageHtml);
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('imageGalleryModal'));
+    modal.hide();
+    
+    showAlert('Imagen insertada exitosamente', 'success');
+}
+
+function triggerNewImageUpload() {
+    const modalImageInput = document.getElementById('modalImageUploadInput');
+    modalImageInput.click();
+}
+
+function handleModalImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        showAlert('Por favor selecciona un archivo de imagen válido (JPG, PNG, GIF, WebP)', 'warning');
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        showAlert('La imagen es demasiado grande. El tamaño máximo es 5MB', 'warning');
+        return;
+    }
+    
+    // Show upload progress
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressBar = document.getElementById('uploadProgressBar');
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    
+    // Create FormData for upload
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Upload image with progress
+    uploadImageWithProgress(formData, file.name);
+}
+
+async function uploadImageWithProgress(formData, fileName) {
+    try {
+        const progressBar = document.getElementById('uploadProgressBar');
+        const progressContainer = document.getElementById('uploadProgressContainer');
+        
+        // Simulate progress (since we can't track real progress with fetch)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 30;
+            if (progress > 90) progress = 90;
+            progressBar.style.width = progress + '%';
+        }, 200);
+        
+        const response = await fetch('/api/v1/image-generation/upload-manual', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: formData
+        });
+        
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Hide progress
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+        }, 500);
+        
+        // Reload gallery
+        loadGalleryImages();
+        
+        showAlert('Imagen subida exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        
+        const progressContainer = document.getElementById('uploadProgressContainer');
+        progressContainer.style.display = 'none';
+        
+        showAlert('Error al subir la imagen. Inténtalo de nuevo.', 'danger');
+    }
+}
+
+function previewImage(imageUrl, imageName) {
+    const previewModal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    const previewImg = document.getElementById('previewImage');
+    const previewDescription = document.getElementById('previewImageDescription');
+    
+    previewImg.src = imageUrl;
+    previewImg.alt = imageName;
+    previewDescription.textContent = imageName;
+    
+    selectedImageData = { url: imageUrl, name: imageName };
+    
+    previewModal.show();
+}
+
+function selectPreviewedImage() {
+    if (!selectedImageData) return;
+    
+    selectGalleryImage(selectedImageData.url, selectedImageData.name, 'preview');
+    
+    // Close preview modal
+    const previewModal = bootstrap.Modal.getInstance(document.getElementById('imagePreviewModal'));
+    previewModal.hide();
+}
+
+function confirmDeleteImage(imageUrl, filename, imageType) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.')) {
+        deleteImage(filename, imageType);
+    }
+}
+
+async function deleteImage(filename, imageType) {
+    try {
+        const endpoint = imageType === 'manual' 
+            ? `/api/v1/image-generation/manual-images/${filename}`
+            : `/api/v1/image-generation/images/${filename}`;
+        
+        const response = await fetch(endpoint, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        // Reload gallery
+        loadGalleryImages();
+        
+        showAlert('Imagen eliminada exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        showAlert('Error al eliminar la imagen', 'danger');
+    }
+}
+
+// Make gallery functions globally available
+window.openImageGalleryModal = openImageGalleryModal;
+window.selectGalleryImage = selectGalleryImage;
+window.triggerNewImageUpload = triggerNewImageUpload;
+window.handleModalImageUpload = handleModalImageUpload;
+window.previewImage = previewImage;
+window.selectPreviewedImage = selectPreviewedImage;
+window.confirmDeleteImage = confirmDeleteImage;
+window.changePage = changePage;

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.services.image_generator import ImageGenerator
@@ -13,6 +14,9 @@ import os
 import uuid
 from PIL import Image
 import shutil
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -562,6 +566,7 @@ async def get_all_images(
     try:
         from app.models.keyword import Keyword
         from app.models.manual_image import ManualImage
+        import os
         
         # Obtener imágenes de contenido
         content_images_query = db.query(ContentImage).join(
@@ -589,10 +594,14 @@ async def get_all_images(
         
         # Agregar imágenes de contenido
         for img in content_images:
+            # Verificar si el archivo existe
+            file_exists = os.path.exists(img.image_path) if img.image_path else False
+            
             all_images.append({
                 "id": f"content_{img.id}",
                 "type": "content",
                 "image_path": img.image_path,
+                "file_exists": file_exists,
                 "alt_text": img.alt_text,
                 "position": img.position,
                 "is_featured": img.is_featured,
@@ -604,10 +613,14 @@ async def get_all_images(
         
         # Agregar imágenes manuales
         for img in manual_images:
+            # Verificar si el archivo existe
+            file_exists = os.path.exists(img.image_path) if img.image_path else False
+            
             all_images.append({
                 "id": f"manual_{img.id}",
                 "type": "manual",
                 "image_path": img.image_path,
+                "file_exists": file_exists,
                 "alt_text": img.alt_text,
                 "prompt_used": img.prompt_used,
                 "style": img.style,
@@ -624,6 +637,11 @@ async def get_all_images(
         # Aplicar paginación
         paginated_images = all_images[offset:offset + limit]
         
+        # Debug: Log the image paths
+        logger.info(f"Found {len(paginated_images)} images for user {current_user.id}")
+        for img in paginated_images:
+            logger.info(f"Image: {img['id']}, Type: {img['type']}, Path: {img['image_path']}, Exists: {img['file_exists']}")
+        
         return {
             "total": total,
             "total_content_images": total_content,
@@ -631,9 +649,60 @@ async def get_all_images(
             "images": paginated_images
         }
     except Exception as e:
+        logger.error(f"Error getting images: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error getting images: {str(e)}"
+        )
+
+@router.get("/manual-images/{filename}", response_class=FileResponse)
+async def get_manual_image(
+    filename: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Sirve una imagen manual específica
+    """
+    try:
+        logger.info(f"Serving manual image: {filename}")
+        
+        # Buscar la imagen en la base de datos
+        manual_image = db.query(ManualImage).filter(
+            ManualImage.image_path.like(f"%{filename}%")
+        ).first()
+        
+        if not manual_image:
+            logger.error(f"Manual image not found in database: {filename}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Image not found"
+            )
+        
+        logger.info(f"Found manual image in database: {manual_image.image_path}")
+        
+        # Verificar que el archivo existe
+        if not os.path.exists(manual_image.image_path):
+            logger.error(f"Manual image file not found on disk: {manual_image.image_path}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Image file not found on disk"
+            )
+        
+        logger.info(f"Serving manual image file: {manual_image.image_path}")
+        
+        return FileResponse(
+            path=manual_image.image_path,
+            media_type="image/*",
+            filename=filename
+        )
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error serving manual image {filename}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error serving image: {str(e)}"
         )
 
 @router.post("/generate-manual", response_model=None)
