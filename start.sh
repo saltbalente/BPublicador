@@ -49,6 +49,13 @@ mkdir -p backend/storage/images/manual
 mkdir -p backend/storage/images/uploads
 echo "Storage directories created successfully"
 
+# Verificar que los directorios existen
+echo "Verifying storage directories:"
+ls -la backend/storage/images/ || echo "Warning: Could not list storage directories"
+
+# Configurar permisos si es necesario
+chmod -R 755 backend/storage/ 2>/dev/null || echo "Note: Could not modify permissions (may not be necessary)"
+
 # Test básico de importación de la aplicación
 echo "Testing application import..."
 python -c "from main import app; print('✓ Application imported successfully')" || {

@@ -104,14 +104,32 @@ if os.path.exists(frontend_path):
 
 # Configurar archivos estáticos para imágenes subidas
 # En Railway, usar un directorio relativo o variable de entorno para storage
-images_path = os.environ.get("IMAGES_PATH", os.path.join(os.path.dirname(__file__), "storage", "images"))
+# Forzar uso de directorio relativo para evitar problemas de permisos
+if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("PORT"):
+    # En Railway, usar directorio relativo
+    images_path = os.path.join(os.path.dirname(__file__), "storage", "images")
+else:
+    # En desarrollo local, permitir variable de entorno
+    images_path = os.environ.get("IMAGES_PATH", os.path.join(os.path.dirname(__file__), "storage", "images"))
+
+print(f"Attempting to configure images directory at: {images_path}")
 try:
     os.makedirs(images_path, exist_ok=True)
     app.mount("/images", StaticFiles(directory=images_path), name="images")
-    print(f"Images directory configured at: {images_path}")
+    print(f"✓ Images directory configured successfully at: {images_path}")
 except PermissionError as e:
-    print(f"Warning: Could not create images directory at {images_path}: {e}")
+    print(f"⚠️ Warning: Could not create images directory at {images_path}: {e}")
     print("Images upload functionality may be limited")
+    # Try alternative path in case of permission issues
+    try:
+        alt_images_path = "./storage/images"
+        os.makedirs(alt_images_path, exist_ok=True)
+        app.mount("/images", StaticFiles(directory=alt_images_path), name="images")
+        print(f"✓ Alternative images directory configured at: {alt_images_path}")
+    except Exception as alt_e:
+        print(f"✗ Failed to configure alternative images directory: {alt_e}")
+except Exception as e:
+    print(f"✗ Unexpected error configuring images directory: {e}")
 
 # Configurar archivos estáticos para el motor de publicación (backend/static)
 backend_static_path = os.path.join(os.path.dirname(__file__), "static")
