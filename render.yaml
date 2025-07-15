@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     buildCommand: "pip install --upgrade pip && pip install -r backend/requirements.txt"
-    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
+    startCommand: "cd backend && python start_simple.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18
