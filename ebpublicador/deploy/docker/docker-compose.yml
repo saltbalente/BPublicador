@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # Main application
+  ebpublicador:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: ebpublicador_app
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=docker
+      - DEBUG=true
+      - DATABASE_URL=postgresql://ebpublicador:password123@postgres:5432/ebpublicador
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY:-your_super_secret_key_change_this}
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+      - STORAGE_PATH=/app/storage
+      - PYTHONPATH=/app
+    volumes:
+      - app_storage:/app/storage
+      - ./../../:/app:ro  # Mount source code for development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ebpublicador_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ebpublicador_postgres
+    environment:
+      - POSTGRES_DB=ebpublicador
+      - POSTGRES_USER=ebpublicador
+      - POSTGRES_PASSWORD=password123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - ebpublicador_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ebpublicador -d ebpublicador"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: ebpublicador_redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ebpublicador_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: ebpublicador_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - app_storage:/var/www/storage:ro
+    depends_on:
+      - ebpublicador
+    networks:
+      - ebpublicador_network
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Database admin interface (development only)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ebpublicador_pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@ebpublicador.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - ebpublicador_network
+    restart: unless-stopped
+    profiles:
+      - development
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_storage:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  ebpublicador_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

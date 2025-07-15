@@ -1,0 +1,47 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+watchPatterns = ["**/*.py", "requirements.txt", "main.py"]
+
+[deploy]
+startCommand = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[environments.production]
+variables = {
+  ENVIRONMENT = "railway",
+  DEBUG = "false",
+  LOG_LEVEL = "INFO",
+  PYTHONPATH = ".",
+  PYTHONUNBUFFERED = "1"
+}
+
+[environments.staging]
+variables = {
+  ENVIRONMENT = "railway",
+  DEBUG = "true",
+  LOG_LEVEL = "DEBUG",
+  PYTHONPATH = ".",
+  PYTHONUNBUFFERED = "1"
+}
+
+# Health check configuration
+[healthcheck]
+path = "/health"
+interval = 30
+timeout = 10
+retries = 3
+
+# Resource limits
+[resources]
+memory = 1024
+cpu = 1000
+
+# Networking
+[networking]
+serviceDomain = "ebpublicador"
+
+# Storage volumes (if needed)
+# [volumes]
+# storage = { mountPath = "/app/storage", size = "1GB" }
