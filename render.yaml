@@ -5,9 +5,13 @@ services:
     env: python
     region: oregon
     plan: free
-    rootDir: backend
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
-    startCommand: "gunicorn -w 1 -k uvicorn.workers.UvicornWorker main_simple:app --bind 0.0.0.0:$PORT"
+    buildCommand: |
+      cd backend
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: |
+      cd backend
+      python start_simple.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18
