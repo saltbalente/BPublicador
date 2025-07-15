@@ -590,12 +590,15 @@ function displayUserLandingPages(landingPages) {
                                                     </small>
                                                 </div>
                                             ` : ''}
-                                            <div class="d-flex gap-2">
+                                            <div class="d-flex gap-1 flex-wrap">
                                                 <button class="btn btn-sm btn-outline-primary" onclick="viewLandingPage(${lp.id})" title="Ver">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-secondary" onclick="editLandingPage(${lp.id})" title="Editar">
                                                     <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-info" onclick="createThemeFromLanding(${lp.id})" title="Crear Tema">
+                                                    <i class="fas fa-palette"></i>
                                                 </button>
                                                 ${lp.is_published ? `
                                                     <button class="btn btn-sm btn-outline-warning" onclick="unpublishLandingPage(${lp.id})" title="Despublicar">
@@ -4334,3 +4337,168 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Function to create theme from landing page
+async function createThemeFromLanding(landingPageId) {
+    try {
+        // Show modal for theme creation
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Crear Tema desde Landing Page</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="createThemeForm">
+                            <div class="mb-3">
+                                <label for="themeName" class="form-label">Nombre del Tema *</label>
+                                <input type="text" class="form-control" id="themeName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeDisplayName" class="form-label">Nombre para Mostrar *</label>
+                                <input type="text" class="form-control" id="themeDisplayName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeDescription" class="form-label">Descripción</label>
+                                <textarea class="form-control" id="themeDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="themeCategory" class="form-label">Categoría *</label>
+                                <select class="form-control" id="themeCategory" required>
+                                    <option value="">Seleccionar categoría...</option>
+                                    <option value="business">Negocios</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="portfolio">Portafolio</option>
+                                    <option value="ecommerce">E-commerce</option>
+                                    <option value="blog">Blog</option>
+                                    <option value="landing">Landing Page</option>
+                                    <option value="corporate">Corporativo</option>
+                                    <option value="creative">Creativo</option>
+                                    <option value="other">Otro</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="includeContent" checked>
+                                    <label class="form-check-label" for="includeContent">
+                                        Incluir contenido como placeholders
+                                    </label>
+                                    <small class="form-text text-muted">Si está marcado, el contenido será reemplazado por placeholders editables</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isActive" checked>
+                                    <label class="form-check-label" for="isActive">
+                                        Tema activo
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="submitCreateTheme(${landingPageId})">Crear Tema</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+        
+        // Remove modal from DOM when hidden
+        modal.addEventListener('hidden.bs.modal', () => {
+            document.body.removeChild(modal);
+        });
+        
+    } catch (error) {
+        console.error('Error showing create theme modal:', error);
+        showAlert('Error al mostrar el formulario de creación de tema', 'danger');
+    }
+}
+
+async function submitCreateTheme(landingPageId) {
+    try {
+        const themeName = document.getElementById('themeName').value.trim();
+        const themeDisplayName = document.getElementById('themeDisplayName').value.trim();
+        const themeDescription = document.getElementById('themeDescription').value.trim();
+        const themeCategory = document.getElementById('themeCategory').value;
+        const includeContent = document.getElementById('includeContent').checked;
+        const isActive = document.getElementById('isActive').checked;
+        
+        // Validate required fields
+        if (!themeName || !themeDisplayName || !themeCategory) {
+            showAlert('Por favor completa todos los campos requeridos', 'warning');
+            return;
+        }
+        
+        // Prepare request data
+        const requestData = {
+            landing_page_id: landingPageId,
+            theme_name: themeName,
+            display_name: themeDisplayName,
+            description: themeDescription,
+            category: themeCategory,
+            include_content: includeContent,
+            is_active: isActive,
+            is_default: false
+        };
+        
+        // Show loading state
+        const submitBtn = document.querySelector('.modal-footer .btn-primary');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+        
+        // Make API request
+        const response = await fetch('/api/v1/themes/create-from-landing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Close modal
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+            bootstrap.Modal.getInstance(modal).hide();
+        }
+        
+        // Show success message
+        showAlert(`Tema "${result.display_name}" creado exitosamente`, 'success');
+        
+        // Optionally refresh themes list if we're on themes page
+        if (typeof loadThemes === 'function') {
+            loadThemes();
+        }
+        
+    } catch (error) {
+        console.error('Error creating theme from landing:', error);
+        showAlert(`Error al crear tema: ${error.message}`, 'danger');
+        
+        // Reset button state
+        const submitBtn = document.querySelector('.modal-footer .btn-primary');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Crear Tema';
+        }
+    }
+}
+
+// Make theme creation functions globally available
+window.createThemeFromLanding = createThemeFromLanding;
+window.submitCreateTheme = submitCreateTheme;
