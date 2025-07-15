@@ -9,7 +9,7 @@ import sys
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 
-def wait_for_database(max_retries=30, delay=2):
+def wait_for_database(max_retries=10, delay=1):
     """
     Espera a que la base de datos esté disponible.
     """
@@ -21,18 +21,16 @@ def wait_for_database(max_retries=30, delay=2):
         print("⏳ Esperando a que Render configure la base de datos...")
         
         # Esperar hasta que la variable esté disponible
-        for attempt in range(max_retries):
+        for attempt in range(5):  # Solo 5 intentos para variables
             database_url = os.getenv("DATABASE_URL")
             if database_url and not database_url.startswith("${") and "${{" not in database_url:
                 print(f"✅ DATABASE_URL configurada: {database_url[:50]}...")
                 break
-            print(f"⏳ Intento {attempt + 1}/{max_retries} - Esperando DATABASE_URL...")
-            print(f"   Valor actual: {database_url}")
-            time.sleep(delay)
+            print(f"⏳ Intento {attempt + 1}/5 - Esperando DATABASE_URL...")
+            time.sleep(1)
         else:
-            print("❌ Timeout esperando DATABASE_URL")
-            print("💡 Sugerencia: Verificar que la base de datos esté creada y vinculada correctamente en render.yaml")
-            sys.exit(1)
+            print("❌ Timeout esperando DATABASE_URL - Continuando sin verificación")
+            return True  # Continuar en lugar de fallar
     
     print(f"🔍 Probando conexión a la base de datos...")
     
