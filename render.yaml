@@ -11,7 +11,7 @@ services:
       pip install -r requirements.txt
     startCommand: |
       cd backend
-      python -c "import uvicorn; import main_isolated; uvicorn.run(main_isolated.app, host='0.0.0.0', port=int(__import__('os').getenv('PORT', 8000)))"
+      python start_simple.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.18

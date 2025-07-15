@@ -1,13 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from datetime import datetime
+import logging
 import os
 
-# Crear aplicación FastAPI ultra-simple
+# Configurar logging básico
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Crear aplicación FastAPI
 app = FastAPI(
-    title="Autopublicador Web API - Simple",
+    title="Autopublicador Web API",
     version="1.0.0",
-    description="API simplificada para Render deployment"
+    description="API para generación automática de contenido con IA"
 )
 
 # Configurar CORS básico
@@ -37,18 +45,7 @@ def health():
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "1.0.0",
-        "service": "autopublicador-api-simple"
-    }
-
-@app.get("/debug/env")
-def debug_env():
-    """Endpoint de diagnóstico de variables de entorno"""
-    return {
-        "PORT": os.getenv("PORT", "Not set"),
-        "DATABASE_URL": os.getenv("DATABASE_URL", "Not set"),
-        "ENVIRONMENT": os.getenv("ENVIRONMENT", "Not set"),
-        "DEBUG": os.getenv("DEBUG", "Not set"),
-        "PYTHON_VERSION": os.getenv("PYTHON_VERSION", "Not set")
+        "service": "autopublicador-api"
     }
 
 @app.get("/ready")
