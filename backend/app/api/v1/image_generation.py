@@ -812,11 +812,9 @@ async def upload_manual_image(
                     detail="Keyword not found"
                 )
         
-        # Crear directorio de imágenes si no existe
-        # Ir hasta la raíz del proyecto (un nivel más arriba del backend)
-        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        project_root = os.path.dirname(backend_dir)
-        upload_dir = os.path.join(project_root, "images", "manual")
+        # Crear directorio de imágenes si no existe - usar path seguro para Railway
+        upload_dir = os.environ.get("MANUAL_IMAGES_PATH", 
+                                   os.path.join(os.path.dirname(__file__), "..", "..", "..", "storage", "images", "manual"))
         os.makedirs(upload_dir, exist_ok=True)
         
         # Generar nombre único para el archivo
@@ -951,9 +949,9 @@ async def generate_dalle_image(
             quality=request.quality
         )
         
-        # Mover la imagen a la carpeta específica
-        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        target_dir = os.path.join(backend_dir, "static", "images", "generated")
+        # Mover la imagen a la carpeta específica - usar path seguro para Railway
+        target_dir = os.environ.get("GENERATED_IMAGES_PATH", 
+                                   os.path.join(os.path.dirname(__file__), "..", "..", "..", "storage", "images", "generated"))
         os.makedirs(target_dir, exist_ok=True)
         
         # Generar nombre único
@@ -994,8 +992,8 @@ async def get_dalle_gallery(
     Obtiene la galería de imágenes generadas con DALL-E
     """
     try:
-        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        images_dir = os.path.join(backend_dir, "static", "images", "generated")
+        images_dir = os.environ.get("GENERATED_IMAGES_PATH", 
+                                   os.path.join(os.path.dirname(__file__), "..", "..", "..", "storage", "images", "generated"))
         
         if not os.path.exists(images_dir):
             return {"success": True, "images": []}

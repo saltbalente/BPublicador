@@ -389,8 +389,9 @@ Please create an image that captures the essence of this mystical content."""
     def _save_image(self, image_data: bytes, filename: str) -> str:
         """Guardar imagen en el sistema de archivos"""
         try:
-            # Crear directorio si no existe
-            images_dir = os.path.join("static", "images", "generated")
+            # Crear directorio si no existe - usar path relativo al backend o variable de entorno
+            images_dir = os.environ.get("GENERATED_IMAGES_PATH", 
+                                       os.path.join(os.path.dirname(__file__), "..", "..", "storage", "images", "generated"))
             os.makedirs(images_dir, exist_ok=True)
             
             # Generar nombre de archivo único

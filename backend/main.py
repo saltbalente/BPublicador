@@ -103,9 +103,15 @@ if os.path.exists(frontend_path):
     print("Frontend static files mounted successfully")
 
 # Configurar archivos estáticos para imágenes subidas
-images_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
-os.makedirs(images_path, exist_ok=True)
-app.mount("/images", StaticFiles(directory=images_path), name="images")
+# En Railway, usar un directorio relativo o variable de entorno para storage
+images_path = os.environ.get("IMAGES_PATH", os.path.join(os.path.dirname(__file__), "storage", "images"))
+try:
+    os.makedirs(images_path, exist_ok=True)
+    app.mount("/images", StaticFiles(directory=images_path), name="images")
+    print(f"Images directory configured at: {images_path}")
+except PermissionError as e:
+    print(f"Warning: Could not create images directory at {images_path}: {e}")
+    print("Images upload functionality may be limited")
 
 # Configurar archivos estáticos para el motor de publicación (backend/static)
 backend_static_path = os.path.join(os.path.dirname(__file__), "static")
