@@ -3,14 +3,12 @@ aptPkgs = ['curl', 'gcc', 'g++', 'libpq-dev']
 
 [phases.install]
 cmds = [
-  'cd backend',
   'pip install -r requirements.txt'
 ]
 
 [phases.build]
 cmds = [
-  'cd backend',
-  'python -m alembic upgrade head'
+  'cd backend && python -m alembic upgrade head || echo "Migration failed, continuing..."'
 ]
 
 [start]

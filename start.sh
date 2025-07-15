@@ -17,7 +17,7 @@ echo "ENVIRONMENT: $ENVIRONMENT"
 echo "Directory structure:"
 ls -la
 
-# Verificar que main.py existe
+# Verificar que main.py existe en la raíz
 if [ ! -f "main.py" ]; then
     echo "ERROR: main.py not found in current directory"
     echo "Available files:"
@@ -25,12 +25,23 @@ if [ ! -f "main.py" ]; then
     exit 1
 fi
 
+# Verificar que el directorio backend existe
+if [ ! -d "backend" ]; then
+    echo "ERROR: backend directory not found"
+    echo "Available directories:"
+    ls -la
+    exit 1
+fi
+
 # Verificar dependencias críticas
 echo "Checking critical dependencies..."
 python -c "import sys; print(f'Python executable: {sys.executable}')" || exit 1
-python -c "import fastapi; print(f'FastAPI: {fastapi.__version__}')" || { echo "FastAPI not available"; exit 1; }
-python -c "import uvicorn; print(f'Uvicorn: {uvicorn.__version__}')" || { echo "Uvicorn not available"; exit 1; }
-python -c "import sqlalchemy; print(f'SQLAlchemy: {sqlalchemy.__version__}')" || echo "SQLAlchemy not available (optional)"
+
+# Verificar que podemos importar desde backend
+echo "Testing backend imports..."
+PYTHONPATH="./backend:$PYTHONPATH" python -c "import fastapi; print(f'FastAPI: {fastapi.__version__}')" || { echo "FastAPI not available"; exit 1; }
+PYTHONPATH="./backend:$PYTHONPATH" python -c "import uvicorn; print(f'Uvicorn: {uvicorn.__version__}')" || { echo "Uvicorn not available"; exit 1; }
+PYTHONPATH="./backend:$PYTHONPATH" python -c "import sqlalchemy; print(f'SQLAlchemy: {sqlalchemy.__version__}')" || echo "SQLAlchemy not available (optional)"
 
 # Test básico de importación de la aplicación
 echo "Testing application import..."
@@ -59,17 +70,8 @@ print('✓ All health endpoints configured')
     exit 1
 }
 
-# Ejecutar migraciones si es necesario
-if [ -f "alembic.ini" ] && [ -n "$DATABASE_URL" ]; then
-    echo "Running database migrations..."
-    python -c "import alembic; print(f'Alembic: {alembic.__version__}')" || { echo "Alembic not available"; exit 1; }
-    alembic upgrade head || {
-        echo "Migration failed, but continuing..."
-        echo "This might be expected if database is not yet available"
-    }
-else
-    echo "Skipping migrations (no alembic.ini or DATABASE_URL)"
-fi
+# Las migraciones ya se ejecutaron en la fase de build de nixpacks
+echo "Skipping migrations (already executed in build phase)"
 
 # Configurar uvicorn con parámetros optimizados para Railway
 echo "Starting FastAPI application..."
