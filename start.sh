@@ -43,6 +43,12 @@ PYTHONPATH="./backend:$PYTHONPATH" python -c "import fastapi; print(f'FastAPI: {
 PYTHONPATH="./backend:$PYTHONPATH" python -c "import uvicorn; print(f'Uvicorn: {uvicorn.__version__}')" || { echo "Uvicorn not available"; exit 1; }
 PYTHONPATH="./backend:$PYTHONPATH" python -c "import sqlalchemy; print(f'SQLAlchemy: {sqlalchemy.__version__}')" || echo "SQLAlchemy not available (optional)"
 
+echo "Creating storage directories..."
+mkdir -p backend/storage/images/generated
+mkdir -p backend/storage/images/manual
+mkdir -p backend/storage/images/uploads
+echo "Storage directories created successfully"
+
 # Test básico de importación de la aplicación
 echo "Testing application import..."
 python -c "from main import app; print('✓ Application imported successfully')" || {
