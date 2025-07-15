@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_, desc, asc
 from datetime import datetime, timedelta
 import json
 import re
-from slugify import slugify
+from python_slugify import slugify
 
 from app.models.landing_page import LandingPage, LandingTemplate, LandingAnalytics, LandingSEOConfig
 from app.models.user import User
