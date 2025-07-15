@@ -74,7 +74,30 @@ python diagnose_render.py
 - ⚡ Arranque ultra-rápido
 - 🔧 Configuración mínima
 
-## 📋 Pasos para Implementar
+## 📋 Implementación
+
+### ✅ CONFIGURACIÓN ACTUAL ACTIVA
+**El proyecto ahora usa la configuración simplificada por defecto:**
+- `render.yaml` → Configuración simplificada con SQLite (ACTIVA)
+- `render_original.yaml` → Configuración original con PostgreSQL (RESPALDO)
+
+### Opción 1: Configuración Actual (Ya Implementada)
+1. ✅ `render.yaml` usa configuración simplificada
+2. ✅ Configuración usa SQLite y evita problemas de base de datos
+3. ✅ Ideal para despliegue inmediato y confiable
+
+### Opción 2: Volver a PostgreSQL (Si es necesario)
+Si necesitas usar PostgreSQL en el futuro:
+```bash
+# Restaurar configuración original
+mv render.yaml render_simple_backup.yaml
+mv render_original.yaml render.yaml
+
+# Configurar DATABASE_URL manualmente en Render Dashboard
+# Ir a: Service Settings → Environment → Add Environment Variable
+# Key: DATABASE_URL
+# Value: [URL de tu base de datos PostgreSQL]
+```
 
 ### Paso 1: Verificar la Configuración Actual
 
