@@ -200,3 +200,4 @@ publish_*.py
 
 # Security logs
 security.log
+.vercel
