@@ -113,6 +113,13 @@ class LandingPageGenerator:
         
         # Crear landing page en la base de datos
         print(f"💾 Guardando landing page en base de datos...")
+        
+        # Truncar seo_description a 160 caracteres máximo
+        original_description = content_data["meta_description"]
+        seo_description = self._truncate_seo_description(original_description)
+        if len(original_description) > 160:
+            print(f"⚠️ SEO description truncada de {len(original_description)} a {len(seo_description)} caracteres")
+        
         landing_data = {
             "title": content_data["title"],
             "description": content_data["meta_description"],
@@ -120,7 +127,7 @@ class LandingPageGenerator:
             "css_content": css_content,
             "js_content": js_content,
             "seo_title": content_data["seo_title"],
-            "seo_description": content_data["meta_description"],
+            "seo_description": seo_description,
             "seo_keywords": keywords,
             "settings": {
                 "ai_provider": ai_provider,
@@ -322,7 +329,7 @@ Requiere generar:
 7. 3 testimonios realistas ({testimonial_instruction})
 8. {cta_count} llamadas a la acción persuasivas
 9. Meta título SEO (50-60 caracteres)
-10. Meta descripción SEO (150-160 caracteres)
+10. Meta descripción SEO (MÁXIMO 160 caracteres - CRÍTICO)
 11. {paragraph_count} párrafos informativos adicionales
 12. COLORES Y ESTILOS PERSONALIZADOS basados en las keywords
 
@@ -464,6 +471,22 @@ Formato de respuesta en JSON:
         # Implementación placeholder para Gemini
         # Se puede implementar cuando esté disponible la API
         return self._generate_fallback_content(keywords, "general")
+    
+    def _truncate_seo_description(self, description: str, max_length: int = 160) -> str:
+        """
+        Trunca la descripción SEO respetando el límite de caracteres
+        """
+        if len(description) <= max_length:
+            return description
+        
+        # Truncar en la palabra más cercana al límite
+        truncated = description[:max_length-3]
+        last_space = truncated.rfind(' ')
+        
+        if last_space > max_length * 0.8:  # Si hay un espacio cerca del final
+            return truncated[:last_space] + "..."
+        else:
+            return truncated + "..."
     
     def _generate_fallback_content(self, keywords: str, theme_category: str) -> Dict[str, Any]:
         """

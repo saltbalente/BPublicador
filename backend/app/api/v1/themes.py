@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.models.theme import Theme
 from app.models.landing_page import LandingPage
 from app.schemas.theme import (
-    ThemeCreate, ThemeUpdate, ThemeResponse, ThemeListResponse, ApplyThemeRequest
+    ThemeCreate, ThemeUpdate, ThemeResponse, ThemeListResponse, ApplyThemeRequest, CreateThemeFromLandingRequest
 )
 from app.api.dependencies import get_current_active_user
 from app.models.user import User
@@ -271,4 +271,122 @@ def get_theme_categories(db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener categorías: {str(e)}"
+        )
+
+@router.post("/create-from-landing", response_model=ThemeResponse)
+def create_theme_from_landing_page(
+    request_data: CreateThemeFromLandingRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Crear un nuevo tema a partir de una landing page existente"""
+    try:
+        # Verificar que la landing page existe y pertenece al usuario
+        landing_page = db.query(LandingPage).filter(
+            LandingPage.id == request_data.landing_page_id,
+            LandingPage.user_id == current_user.id
+        ).first()
+        
+        if not landing_page:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Landing page no encontrada o no tienes permisos para acceder a ella"
+            )
+        
+        # Verificar si ya existe un tema con ese nombre
+        existing_theme = db.query(Theme).filter(Theme.name == request_data.theme_name).first()
+        if existing_theme:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe un tema con ese nombre"
+            )
+        
+        # Extraer y procesar el CSS de la landing page
+        css_content = landing_page.css_content or ""
+        
+        # Si no hay CSS separado, intentar extraerlo del HTML
+        if not css_content and landing_page.html_content:
+            import re
+            # Buscar contenido CSS en etiquetas <style>
+            style_matches = re.findall(r'<style[^>]*>(.*?)</style>', landing_page.html_content, re.DOTALL | re.IGNORECASE)
+            if style_matches:
+                css_content = '\n'.join(style_matches)
+        
+        # Si incluir contenido está habilitado, procesar el HTML para crear un template
+        html_template = ""
+        if request_data.include_content and landing_page.html_content:
+            html_template = landing_page.html_content
+            
+            # Reemplazar contenido específico con placeholders para hacer el tema reutilizable
+            # Esto permite que el tema sea usado como template
+            import re
+            
+            # Reemplazar títulos específicos con placeholders
+            if landing_page.title:
+                html_template = html_template.replace(landing_page.title, "{{LANDING_TITLE}}")
+            
+            # Reemplazar meta description
+            if landing_page.seo_description:
+                html_template = html_template.replace(landing_page.seo_description, "{{LANDING_DESCRIPTION}}")
+            
+            # Reemplazar números de teléfono (patrón básico)
+            phone_pattern = r'\+?[0-9]{1,4}[\s\-]?[0-9]{2,4}[\s\-]?[0-9]{2,4}[\s\-]?[0-9]{2,4}'
+            html_template = re.sub(phone_pattern, "{{PHONE_NUMBER}}", html_template)
+            
+            # Reemplazar enlaces de WhatsApp
+            whatsapp_pattern = r'https://wa\.me/[0-9]+'
+            html_template = re.sub(whatsapp_pattern, "{{WHATSAPP_URL}}", html_template)
+        
+        # Extraer variables del tema desde el CSS
+        theme_variables = {}
+        if css_content:
+            # Buscar variables CSS (custom properties)
+            import re
+            css_vars = re.findall(r'--([a-zA-Z0-9-]+)\s*:\s*([^;]+);', css_content)
+            for var_name, var_value in css_vars:
+                theme_variables[var_name] = var_value.strip()
+        
+        # Configuraciones adicionales del tema
+        settings = {
+            "source_landing_id": landing_page.id,
+            "source_landing_title": landing_page.title,
+            "created_from_landing": True,
+            "original_slug": landing_page.slug,
+            "includes_content": request_data.include_content
+        }
+        
+        # Si hay JavaScript, incluirlo en las configuraciones
+        if landing_page.js_content:
+            settings["js_content"] = landing_page.js_content
+        
+        # Si hay template HTML, incluirlo en las configuraciones
+        if html_template:
+            settings["html_template"] = html_template
+        
+        # Crear el nuevo tema
+        new_theme = Theme(
+            name=request_data.theme_name,
+            display_name=request_data.display_name,
+            description=request_data.description or f"Tema creado desde la landing page '{landing_page.title}'",
+            category=request_data.category,
+            css_content=css_content,
+            theme_variables=theme_variables,
+            settings=settings,
+            is_active=request_data.is_active,
+            is_default=request_data.is_default
+        )
+        
+        db.add(new_theme)
+        db.commit()
+        db.refresh(new_theme)
+        
+        return new_theme
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al crear tema desde landing page: {str(e)}"
         )

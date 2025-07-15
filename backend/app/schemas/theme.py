@@ -56,3 +56,14 @@ class ApplyThemeRequest(BaseModel):
     """Esquema para aplicar tema a landing page"""
     theme_id: int = Field(..., description="ID del tema a aplicar")
     landing_page_id: int = Field(..., description="ID de la landing page")
+
+class CreateThemeFromLandingRequest(BaseModel):
+    """Esquema para crear un tema desde una landing page existente"""
+    landing_page_id: int = Field(..., description="ID de la landing page fuente")
+    theme_name: str = Field(..., min_length=1, max_length=100, description="Nombre único del tema")
+    display_name: str = Field(..., min_length=1, max_length=150, description="Nombre para mostrar")
+    description: Optional[str] = Field(None, description="Descripción del tema")
+    category: str = Field(..., min_length=1, max_length=50, description="Categoría del tema")
+    include_content: bool = Field(default=False, description="Si incluir el contenido de texto en el tema")
+    is_active: bool = Field(default=True, description="Si el tema estará activo")
+    is_default: bool = Field(default=False, description="Si será el tema por defecto")

@@ -142,6 +142,22 @@ Contenido completo aquí con etiquetas HTML semánticas
         
         return base_prompt
     
+    def _truncate_seo_description(self, description: str, max_length: int = 160) -> str:
+        """
+        Trunca la descripción SEO respetando el límite de caracteres
+        """
+        if len(description) <= max_length:
+            return description
+        
+        # Truncar en la palabra más cercana al límite
+        truncated = description[:max_length-3]
+        last_space = truncated.rfind(' ')
+        
+        if last_space > max_length * 0.8:  # Si hay un espacio cerca del final
+            return truncated[:last_space] + "..."
+        else:
+            return truncated + "..."
+    
     def _parse_generated_content(self, content: str) -> Dict[str, str]:
         """Parsear contenido generado y extraer título, meta descripción y contenido"""
         result = {
@@ -176,7 +192,11 @@ Contenido completo aquí con etiquetas HTML semánticas
                     # Preservar el formato original para mantener las etiquetas HTML
                     content_lines.append(line)
                 elif line_stripped:
-                    result[current_section] = line_stripped
+                    if current_section == "meta_description":
+                        # Truncar meta_description si excede 160 caracteres
+                        result[current_section] = self._truncate_seo_description(line_stripped)
+                    else:
+                        result[current_section] = line_stripped
         
         # Unir las líneas de contenido preservando el formato HTML
         if content_lines:

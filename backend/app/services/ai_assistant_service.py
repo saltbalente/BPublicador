@@ -11,10 +11,20 @@ class AIAssistantService:
     basado en descripciones del usuario y el contexto actual de la landing page.
     """
     
-    def __init__(self):
+    def __init__(self, user=None):
         """Inicializa el servicio con la configuración de OpenAI"""
-        openai.api_key = settings.OPENAI_API_KEY
-        self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        # Usar API key del usuario si está disponible, sino usar la de settings
+        api_key = None
+        if user and hasattr(user, 'api_key_openai') and user.api_key_openai:
+            api_key = user.api_key_openai
+        elif hasattr(settings, 'OPENAI_API_KEY') and settings.OPENAI_API_KEY:
+            api_key = settings.OPENAI_API_KEY
+        
+        if not api_key:
+            raise ValueError("No se encontró API key de OpenAI configurada")
+        
+        openai.api_key = api_key
+        self.client = openai.OpenAI(api_key=api_key)
     
     async def generate_code_elements(
         self,

@@ -630,8 +630,8 @@ async def ai_assistant(
                 detail="El prompt es requerido"
             )
         
-        # Inicializar servicio de IA
-        ai_service = AIAssistantService()
+        # Inicializar servicio de IA con el usuario actual
+        ai_service = AIAssistantService(user=current_user)
         
         # Generar código con IA
         result = await ai_service.generate_code_elements(
