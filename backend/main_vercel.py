@@ -1,44 +1,39 @@
-"""
-Main application optimized for Vercel deployment
-"""
+"""Punto de entrada optimizado para Vercel"""
 import os
 import sys
 from pathlib import Path
 
-# Configurar el path para importaciones
-backend_dir = Path(__file__).parent
+# Configurar rutas de importación
+current_dir = Path(__file__).parent
+backend_dir = current_dir
+project_root = current_dir.parent
+
+# Añadir directorios al path de Python
 sys.path.insert(0, str(backend_dir))
+sys.path.insert(0, str(project_root))
 
-# Inicializar la aplicación para Vercel
-def init_for_vercel():
-    """Inicialización específica para Vercel"""
-    try:
-        # Ejecutar inicialización de base de datos
-        from vercel_init import init_database, create_directories
-        create_directories()
-        init_database()
-        print("✅ Vercel initialization completed")
-    except Exception as e:
-        print(f"⚠️ Vercel initialization warning: {e}")
-
-# Ejecutar inicialización solo en Vercel
-if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
-    init_for_vercel()
-
-# Importar la aplicación principal
-from main import app
-
-# Configuraciones específicas para Vercel
-if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
+# Configurar variables de entorno para Vercel
+if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+    print("🚀 Inicializando aplicación para Vercel...")
+    
+    # Ejecutar inicialización específica para Vercel
+    from vercel_init import initialize_for_vercel
+    initialize_for_vercel()
+    
     # Configurar variables de entorno para producción
     os.environ.setdefault("ENVIRONMENT", "production")
     os.environ.setdefault("DEBUG", "false")
     os.environ.setdefault("DATABASE_URL", "sqlite:///./autopublicador.db")
+    
+    # Importar y validar configuración de producción
+    try:
+        from config_production import config
+        print("✅ Configuración de producción cargada")
+    except ImportError as e:
+        print(f"⚠️ Error al cargar configuración de producción: {e}")
 
-# Handler para Vercel
-def handler(request, context):
-    """Handler principal para Vercel"""
-    return app(request, context)
+# Importar y exportar la aplicación principal
+from main import app
 
-# Exportar la aplicación para Vercel
-app = app
+# Exportar para Vercel
+__all__ = ["app"]
