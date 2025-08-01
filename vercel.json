@@ -1,7 +1,7 @@
 {
   "functions": {
     "backend/main_vercel.py": {
-      "runtime": "python3.11",
+      "runtime": "@vercel/python",
       "memory": 1024,
       "maxDuration": 30
     }
