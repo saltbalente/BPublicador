@@ -22,7 +22,9 @@ app = None
 try:
     # Vercel ejecuta desde la raíz, por lo que las importaciones relativas a 'backend' deben funcionar
     # si 'backend' está en el PYTHONPATH.
-    from main import app
+    # Se cambia la importación para evitar un ciclo de importación.
+    import main
+    app = main.app
     print("✅ Aplicación FastAPI cargada correctamente")
     print(f"✅ App title: {getattr(app, 'title', 'N/A')}")
     
