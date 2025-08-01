@@ -1,7 +1,6 @@
 {
   "functions": {
-    "backend/main_vercel.py": {
-      "runtime": "@vercel/python",
+    "api/index.py": {
       "memory": 1024,
       "maxDuration": 30
     }
@@ -21,7 +20,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/backend/main_vercel.py"
+      "destination": "/api/index"
     }
   ],
   "env": {
