@@ -1,208 +1,22 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from app.api.v1.router import api_router
-from app.api.v1 import auth, keywords, content, keyword_analysis, image_generation, scheduler, analytics, categories, tags, seo_schemas, publication
-from app.core.config import settings
-from app.core.database import get_db
-from app.models.content import Content
-# from app.middleware.security import SecurityMiddleware
-from sqlalchemy.orm import Session
-import time
-from datetime import datetime
-import os
-import html
-import logging
+# backend/main.py
 
-# Configurar logging detallado
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+from .application import create_app
+import uvicorn
 
-# Configurar logger específico para actualizaciones de contenido
-content_logger = logging.getLogger("content_update")
-content_logger.setLevel(logging.DEBUG)
+# Crear la aplicación usando la factory
+app = create_app()
 
-app = FastAPI(
-    title="Autopublicador Web API",
-    version="1.0.0",
-    description="API para generación automática de contenido con IA"
-)
-
-# Exception handler para errores de validación de Pydantic
-from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger = logging.getLogger("validation_error")
-    logger.error(f"Error de validación en {request.method} {request.url}: {exc.errors()}")
-    return JSONResponse(
-        status_code=422,
-        content={"detail": f"Error de validación: {exc.errors()}"}
+# Punto de entrada para Uvicorn (desarrollo local)
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app", 
+        host="0.0.0.0", 
+        port=8002, 
+        reload=True, 
+        log_level="info",
+        reload_dirs=["backend/app", "backend/core", "backend/models"]
     )
 
-@app.exception_handler(ValidationError)
-async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
-    logger = logging.getLogger("validation_error")
-    logger.error(f"Error de validación Pydantic en {request.method} {request.url}: {exc.errors()}")
-    return JSONResponse(
-        status_code=422,
-        content={"detail": f"Error de validación Pydantic: {exc.errors()}"}
-    )
-
-# Middleware para capturar errores de validación
-@app.middleware("http")
-async def validation_error_middleware(request: Request, call_next):
-    try:
-        response = await call_next(request)
-        return response
-    except Exception as e:
-        import traceback
-        logger = logging.getLogger("validation_error")
-        logger.error(f"Error en request {request.method} {request.url}: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        
-        # Si es un error de validación de Pydantic
-        if "ValidationError" in str(type(e)):
-            logger.error(f"Pydantic ValidationError: {e}")
-            return JSONResponse(
-                status_code=422,
-                content={"detail": f"Error de validación: {str(e)}"}
-            )
-        raise e
-
-# Configurar middleware de seguridad (DEBE IR ANTES QUE CORS)
-# app.add_middleware(
-#     SecurityMiddleware,
-#     max_requests_per_minute=60,
-#     max_requests_per_hour=1000,
-#     blocked_ips=[],  # Lista de IPs bloqueadas permanentemente
-#     allowed_file_types=['jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'csv', 'json'],
-#     max_content_length=10 * 1024 * 1024,  # 10MB
-# )
-
-# Configurar CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # En producción, especificar dominios exactos
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configurar archivos estáticos para el frontend
-frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
-print(f"Frontend path: {frontend_path}")
-print(f"Frontend exists: {os.path.exists(frontend_path)}")
-if os.path.exists(frontend_path):
-    app.mount("/frontend", StaticFiles(directory=frontend_path), name="frontend_static")
-    print("Frontend static files mounted successfully")
-
-# Configurar archivos estáticos para imágenes subidas
-# En Railway, usar un directorio relativo o variable de entorno para storage
-# Forzar uso de directorio relativo para evitar problemas de permisos
-if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("PORT"):
-    # En Railway, usar directorio relativo
-    images_path = os.path.join(os.path.dirname(__file__), "storage", "images")
-else:
-    # En desarrollo local, permitir variable de entorno
-    images_path = os.environ.get("IMAGES_PATH", os.path.join(os.path.dirname(__file__), "storage", "images"))
-
-print(f"Attempting to configure images directory at: {images_path}")
-try:
-    os.makedirs(images_path, exist_ok=True)
-    app.mount("/images", StaticFiles(directory=images_path), name="images")
-    print(f"✓ Images directory configured successfully at: {images_path}")
-except PermissionError as e:
-    print(f"⚠️ Warning: Could not create images directory at {images_path}: {e}")
-    print("Images upload functionality may be limited")
-    # Try alternative path in case of permission issues
-    try:
-        alt_images_path = "./storage/images"
-        os.makedirs(alt_images_path, exist_ok=True)
-        app.mount("/images", StaticFiles(directory=alt_images_path), name="images")
-        print(f"✓ Alternative images directory configured at: {alt_images_path}")
-    except Exception as alt_e:
-        print(f"✗ Failed to configure alternative images directory: {alt_e}")
-except Exception as e:
-    print(f"✗ Unexpected error configuring images directory: {e}")
-
-# Configurar archivos estáticos para el motor de publicación (backend/static)
-backend_static_path = os.path.join(os.path.dirname(__file__), "static")
-if os.path.exists(backend_static_path):
-    app.mount("/static", StaticFiles(directory=backend_static_path), name="backend_static")
-    print(f"Backend static files mounted from: {backend_static_path}")
-else:
-    print(f"Backend static directory not found: {backend_static_path}")
-
-# Configurar archivos estáticos para el motor de publicación (app/static)
-app_static_path = os.path.join(os.path.dirname(__file__), "app", "static")
-if os.path.exists(app_static_path):
-    app.mount("/app-static", StaticFiles(directory=app_static_path), name="app_static")
-    print(f"App static files mounted from: {app_static_path}")
-else:
-    print(f"App static directory not found: {app_static_path}")
-
-# Configurar templates
-templates_path = os.path.join(os.path.dirname(__file__), "app", "templates")
-templates = Jinja2Templates(directory=templates_path)
-
-# Definir filtros personalizados para Jinja2
-def truncate_words(text, length=50):
-    """Truncar texto por número de palabras"""
-    if not text:
-        return ""
-    words = str(text).split()
-    if len(words) <= length:
-        return text
-    return ' '.join(words[:length]) + '...'
-
-def format_date(date, format='%d de %B, %Y'):
-    """Formatear fecha"""
-    if not date:
-        return ""
-    # Mapeo de meses en español
-    months = {
-        'January': 'enero', 'February': 'febrero', 'March': 'marzo',
-        'April': 'abril', 'May': 'mayo', 'June': 'junio',
-        'July': 'julio', 'August': 'agosto', 'September': 'septiembre',
-        'October': 'octubre', 'November': 'noviembre', 'December': 'diciembre'
-    }
-    
-    formatted = date.strftime(format)
-    for en_month, es_month in months.items():
-        formatted = formatted.replace(en_month, es_month)
-    return formatted
-
-def reading_time(text, wpm=200):
-    """Calcular tiempo de lectura estimado"""
-    if not text:
-        return "1"
-    word_count = len(str(text).split())
-    minutes = max(1, round(word_count / wpm))
-    return str(minutes)
-
-# Agregar función now() como global
-def now():
-    """Función para obtener la fecha actual"""
-    return datetime.now()
-
-# Registrar los filtros en el entorno Jinja2
-templates.env.filters['truncate_words'] = truncate_words
-templates.env.filters['format_date'] = format_date
-templates.env.filters['reading_time'] = reading_time
-
-# Registrar funciones globales
-templates.env.globals['now'] = now
-
-print(f"Templates configured from: {templates_path}")
-
-# Incluir rutas de la API
-app.include_router(api_router, prefix="/api/v1")
 
 # Incluir rutas públicas del sitio web (con prefijo para evitar conflictos)
 from app.api.v1.publication import router as publication_router
