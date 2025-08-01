@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from app.api.v1.router import api_router
+
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.content import Content
@@ -69,7 +69,8 @@ def create_app() -> FastAPI:
 
     templates.env.filters['unescape_html'] = unescape_html
 
-    # Incluir el router principal de la API
+    # Las importaciones de rutas se mueven aquí para evitar ciclos
+    from app.api.v1.router import api_router
     app_instance.include_router(api_router, prefix=settings.API_V1_STR)
 
     # Endpoint para la raíz del sitio (sirve el index.html)
