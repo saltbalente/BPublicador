@@ -1,42 +1,32 @@
 {
-  "builds": [
+  "functions": {
+    "backend/main_vercel.py": {
+      "runtime": "python3.11",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
     {
-      "src": "backend/main_vercel.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb",
-        "runtime": "python3.11"
-      }
+      "source": "/frontend/(.*)",
+      "destination": "/frontend/$1"
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": "/backend/static/$1"
+    },
+    {
+      "source": "/images/(.*)",
+      "destination": "/images/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/backend/main_vercel.py"
     }
   ],
-  "routes": [
-    {
-      "src": "/frontend/(.*)",
-      "dest": "/frontend/$1"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/backend/static/$1"
-    },
-    {
-      "src": "/images/(.*)",
-      "dest": "/images/$1"
-    },
-    {
-       "src": "/(.*)",
-       "dest": "backend/main_vercel.py"
-     }
-  ],
-  "functions": {
-     "backend/main_vercel.py": {
-       "memory": 1024,
-       "maxDuration": 30
-     }
-   },
   "env": {
     "PYTHONPATH": "backend",
     "ENVIRONMENT": "production"
   },
-  "outputDirectory": ".",
   "installCommand": "pip install -r requirements-vercel.txt"
 }
