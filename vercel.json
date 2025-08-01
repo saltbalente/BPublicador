@@ -22,5 +22,16 @@
     "PYTHONPATH": "backend",
     "ENVIRONMENT": "production"
   },
-  "installCommand": "pip install -r requirements.txt"
+  "installCommand": "pip install -r requirements.txt",
+  "builds": [
+    {
+      "src": "backend/vercel_init.py",
+      "use": "@vercel/python",
+      "config": { "executionCommand": "python backend/vercel_init.py" }
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ]
 }
