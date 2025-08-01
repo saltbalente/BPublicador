@@ -91,6 +91,3 @@ def create_app() -> FastAPI:
         return FileResponse(file_path)
 
     return app_instance
-
-# Crear la instancia de la aplicación para ser importada por otros módulos
-app = create_app()
