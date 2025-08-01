@@ -33,11 +33,57 @@ class SchedulerService:
         self.is_running = False
         self.current_task = None
         
-    def start_scheduler(self, user_id: int, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Iniciar el programador automático"""
+    async def configure_scheduler(self, user_id: int, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Configurar el programador automático"""
         try:
             # Validar configuración
-            validated_config = self._validate_scheduler_config(config)
+            validated_config = {
+                "enabled": config.get("enabled", True),
+                "interval": "30min",  # Default
+                "max_posts_per_day": config.get("max_daily_posts", 5),
+                "auto_publish": config.get("auto_publish", False),
+                "generate_images": config.get("generate_images", True),
+                "content_style": config.get("content_style", "professional"),
+                "word_count_min": config.get("word_count_min", 500),
+                "word_count_max": config.get("word_count_max", 1500)
+            }
+            
+            # Convertir interval_minutes a formato interno
+            interval_minutes = config.get("interval_minutes", 30)
+            if interval_minutes <= 5:
+                validated_config["interval"] = "5min"
+            elif interval_minutes <= 15:
+                validated_config["interval"] = "15min"
+            elif interval_minutes <= 30:
+                validated_config["interval"] = "30min"
+            elif interval_minutes <= 60:
+                validated_config["interval"] = "hourly"
+            else:
+                validated_config["interval"] = "daily"
+            
+            # Guardar configuración
+            self._save_scheduler_config(user_id, validated_config)
+            
+            logger.info(f"Scheduler configurado para usuario {user_id}")
+            
+            return validated_config
+            
+        except Exception as e:
+            logger.error(f"Error configurando scheduler: {str(e)}")
+            raise
+        
+    def start_scheduler(self, user_id: int, config: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Iniciar el programador automático"""
+        try:
+            # Si no se proporciona config, usar la configuración guardada
+            if config is None:
+                config = self._get_scheduler_config(user_id)
+                if not config:
+                    raise ValueError("No hay configuración del scheduler. Configure primero el scheduler.")
+                validated_config = config
+            else:
+                # Validar configuración
+                validated_config = self._validate_scheduler_config(config)
             
             # Verificar que el usuario existe
             user = self.db.query(User).filter(User.id == user_id).first()
@@ -363,18 +409,50 @@ class SchedulerService:
             return False
     
     def _save_scheduler_config(self, user_id: int, config: Dict[str, Any]):
-        """Guardar configuración del scheduler (implementar según necesidades)"""
-        # Aquí implementarías el guardado en base de datos o cache
-        # Por ahora usamos un diccionario en memoria
-        if not hasattr(self, '_scheduler_configs'):
-            self._scheduler_configs = {}
-        self._scheduler_configs[user_id] = config
+        """Guardar configuración del scheduler en base de datos"""
+        from app.models.scheduler_config import SchedulerConfig
+        
+        try:
+            # Buscar configuración existente
+            scheduler_config = self.db.query(SchedulerConfig).filter(
+                SchedulerConfig.user_id == user_id
+            ).first()
+            
+            if scheduler_config:
+                # Actualizar configuración existente
+                scheduler_config.update_from_dict(config)
+                scheduler_config.status = "configured"
+            else:
+                # Crear nueva configuración
+                scheduler_config = SchedulerConfig(user_id=user_id)
+                scheduler_config.update_from_dict(config)
+                scheduler_config.status = "configured"
+                self.db.add(scheduler_config)
+            
+            self.db.commit()
+            logger.info(f"Configuración del scheduler guardada para usuario {user_id}")
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error guardando configuración del scheduler: {str(e)}")
+            raise
     
     def _get_scheduler_config(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """Obtener configuración del scheduler"""
-        if not hasattr(self, '_scheduler_configs'):
+        """Obtener configuración del scheduler desde base de datos"""
+        from app.models.scheduler_config import SchedulerConfig
+        
+        try:
+            scheduler_config = self.db.query(SchedulerConfig).filter(
+                SchedulerConfig.user_id == user_id
+            ).first()
+            
+            if scheduler_config:
+                return scheduler_config.to_dict()
             return None
-        return self._scheduler_configs.get(user_id)
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo configuración del scheduler: {str(e)}")
+            return None
     
     def get_scheduler_queue(self, user_id: int) -> Dict[str, Any]:
         """Obtener cola de tareas programadas"""

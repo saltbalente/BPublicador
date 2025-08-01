@@ -14,7 +14,45 @@ backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
 def init_database():
-    """Inicializa la base de datos SQLite para Vercel"""
+    """Inicializa la base de datos para Vercel (PostgreSQL o SQLite)"""
+    try:
+        # Verificar si estamos usando PostgreSQL
+        database_url = os.getenv("DATABASE_URL", "sqlite:///./autopublicador.db")
+        
+        if database_url.startswith(("postgresql://", "postgres://")):
+            print("🐘 Detectado PostgreSQL, ejecutando migración...")
+            return init_postgresql()
+        else:
+            print("📁 Usando SQLite para desarrollo...")
+            return init_sqlite()
+    
+    except Exception as e:
+        print(f"❌ Error inicializando base de datos: {e}")
+        return False
+
+def init_postgresql():
+    """Inicializa PostgreSQL usando SQLAlchemy"""
+    try:
+        # Ejecutar script de migración
+        import subprocess
+        result = subprocess.run([
+            sys.executable, 
+            str(backend_dir / "migrate_to_postgresql.py")
+        ], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            print("✅ PostgreSQL inicializado correctamente")
+            return True
+        else:
+            print(f"❌ Error en migración PostgreSQL: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error ejecutando migración PostgreSQL: {e}")
+        return False
+
+def init_sqlite():
+    """Inicializa la base de datos SQLite para desarrollo local"""
     try:
         # Crear directorio de base de datos si no existe
         db_path = backend_dir / "autopublicador.db"
@@ -128,7 +166,8 @@ def create_directories():
         print(f"❌ Error creando directorios: {e}")
         return False
 
-if __name__ == "__main__":
+def initialize_for_vercel():
+    """Función principal de inicialización para Vercel"""
     print("🚀 Inicializando Autopublicador para Vercel...")
     
     # Crear directorios
@@ -138,3 +177,6 @@ if __name__ == "__main__":
     init_database()
     
     print("✅ Inicialización completada")
+
+if __name__ == "__main__":
+    initialize_for_vercel()

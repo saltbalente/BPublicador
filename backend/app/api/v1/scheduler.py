@@ -68,31 +68,20 @@ async def get_scheduler_status(
             detail=f"Error getting scheduler status: {str(e)}"
         )
 
-@router.post("/configure", response_model=None)
+@router.post("/configure")
 async def configure_scheduler(
     config: SchedulerConfig,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
-    """
-    Configura el programador automático
-    """
+    """Configurar el programador automático"""
     try:
         scheduler_service = SchedulerService(db)
-        result = await scheduler_service.configure_scheduler(
-            user_id=current_user.id,
-            config=config.dict()
-        )
-        return {
-            "success": True,
-            "message": "Scheduler configured successfully",
-            "config": result
-        }
+        result = await scheduler_service.configure_scheduler(current_user.id, config.dict())
+        return {"message": "Scheduler configurado exitosamente", "config": result}
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error configuring scheduler: {str(e)}"
-        )
+        logger.error(f"Error configurando scheduler: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/start", response_model=None)
 async def start_scheduler(
@@ -104,7 +93,7 @@ async def start_scheduler(
     """
     try:
         scheduler_service = SchedulerService(db)
-        result = await scheduler_service.start_scheduler(current_user.id)
+        result = scheduler_service.start_scheduler(current_user.id)
         return {
             "success": True,
             "message": "Scheduler started successfully",
@@ -126,7 +115,7 @@ async def stop_scheduler(
     """
     try:
         scheduler_service = SchedulerService(db)
-        await scheduler_service.stop_scheduler(current_user.id)
+        result = scheduler_service.stop_scheduler(current_user.id)
         return {
             "success": True,
             "message": "Scheduler stopped successfully"

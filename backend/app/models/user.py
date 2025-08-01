@@ -15,9 +15,11 @@ class User(Base):
     api_key_openai = Column(String(255))
     daily_limit = Column(Integer, default=10)
     created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
     # Relaciones
     content_items = relationship("Content", back_populates="user")
     image_configs = relationship("ImageConfig", back_populates="user")
     manual_images = relationship("ManualImage", back_populates="user")
     landing_pages = relationship("LandingPage", back_populates="user")
+    scheduler_config = relationship("SchedulerConfig", back_populates="user", uselist=False)
     # usage_stats = relationship("UsageStats", back_populates="user")
