@@ -1,26 +1,42 @@
 {
   "builds": [
     {
-      "src": "backend/main.py",
+      "src": "backend/main_vercel.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "50mb",
-        "runtime": "python3.9"
+        "runtime": "python3.11"
       }
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "backend/main.py"
-    }
+      "src": "/frontend/(.*)",
+      "dest": "/frontend/$1"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/backend/static/$1"
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/images/$1"
+    },
+    {
+       "src": "/(.*)",
+       "dest": "backend/main_vercel.py"
+     }
   ],
   "functions": {
-    "backend/main.py": {
-      "memory": 1024
-    }
-  },
+     "backend/main_vercel.py": {
+       "memory": 1024,
+       "maxDuration": 30
+     }
+   },
   "env": {
-    "PYTHONPATH": "backend"
-  }
+    "PYTHONPATH": "backend",
+    "ENVIRONMENT": "production"
+  },
+  "outputDirectory": ".",
+  "installCommand": "pip install -r requirements-vercel.txt"
 }

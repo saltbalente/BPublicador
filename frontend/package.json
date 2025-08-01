@@ -1,0 +1,22 @@
+{
+  "name": "autopublicador-frontend",
+  "version": "1.0.0",
+  "description": "Frontend para Autopublicador Web",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "dev": "python -m http.server 3000",
+    "build": "echo 'No build process needed for static files'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "autopublicador",
+    "content",
+    "ai",
+    "publishing"
+  ],
+  "author": "Autopublicador Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}

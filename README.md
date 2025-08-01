@@ -1,10 +1,207 @@
-# 🔮 Autopublicador Web - Plataforma de Generación de Contenido con IA
+# 🚀 Autopublicador Web
 
-> **Plataforma completa para la generación automática de contenido SEO sobre brujería, esoterismo y magia usando Inteligencia Artificial**
+Un sistema de autopublicación inteligente que utiliza IA para generar contenido automáticamente. Similar a WordPress pero con capacidades de generación automática de artículos, imágenes y páginas de aterrizaje.
 
-## 📋 Descripción
+## ✨ Características
 
-Esta es una plataforma web moderna desarrollada con **Python + FastAPI + React** que permite la generación automática de contenido optimizado para SEO usando IA. La plataforma incluye análisis de keywords, detección de canibalización, generación de imágenes con IA, programación automática y analytics detallados.
+- 🤖 **Generación automática de contenido** con múltiples proveedores de IA (OpenAI, DeepSeek, Gemini)
+- 🎨 **Generación de imágenes** con DALL-E y otros modelos
+- 📝 **Editor de contenido** con vista previa en tiempo real
+- 🎯 **Páginas de aterrizaje** personalizables
+- 📊 **Dashboard de administración** completo
+- 🔐 **Sistema de autenticación** seguro
+- 📱 **Diseño responsivo** para todos los dispositivos
+- ⚡ **Optimizado para Vercel** con despliegue automático
+
+## 🛠️ Tecnologías
+
+### Backend
+- **FastAPI** - Framework web moderno y rápido
+- **SQLAlchemy** - ORM para base de datos
+- **SQLite** - Base de datos ligera
+- **Pydantic** - Validación de datos
+- **JWT** - Autenticación segura
+
+### Frontend
+- **HTML5/CSS3** - Interfaz moderna
+- **JavaScript** - Interactividad
+- **Bootstrap** - Framework CSS responsivo
+- **Jinja2** - Motor de plantillas
+
+### IA y APIs
+- **OpenAI GPT** - Generación de texto
+- **DALL-E** - Generación de imágenes
+- **DeepSeek** - Modelo de IA alternativo
+- **Google Gemini** - Modelo de IA de Google
+
+## 🚀 Despliegue Rápido en Vercel
+
+### 1. Preparación
+```bash
+# Clonar el repositorio
+git clone https://github.com/TU_USUARIO/autopublicador-web.git
+cd autopublicador-web
+
+# Ejecutar script de preparación
+chmod +x prepare_for_github.sh
+./prepare_for_github.sh
+```
+
+### 2. Configurar Variables de Entorno
+En Vercel, configura estas variables obligatorias:
+
+```env
+# Seguridad (OBLIGATORIO)
+SECRET_KEY=tu_clave_secreta_muy_segura
+
+# Al menos una API de IA (OBLIGATORIO)
+OPENAI_API_KEY=sk-...
+# O
+DEEPSEEK_API_KEY=sk-...
+# O
+GEMINI_API_KEY=...
+
+# Configuración básica
+AI_PROVIDER=openai
+ENVIRONMENT=production
+DEBUG=false
+```
+
+### 3. Desplegar
+1. Ve a [vercel.com](https://vercel.com)
+2. Conecta tu repositorio de GitHub
+3. Configura las variables de entorno
+4. ¡Despliega!
+
+## 🔧 Desarrollo Local
+
+### Requisitos
+- Python 3.9+
+- Node.js (opcional, para desarrollo frontend)
+
+### Instalación
+```bash
+# Clonar repositorio
+git clone https://github.com/TU_USUARIO/autopublicador-web.git
+cd autopublicador-web
+
+# Instalar dependencias
+pip install -r backend/requirements.txt
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus API keys
+
+# Ejecutar aplicación
+cd backend
+python main.py
+```
+
+La aplicación estará disponible en `http://localhost:8000`
+
+## 📋 Configuración
+
+### Variables de Entorno Principales
+
+| Variable | Descripción | Requerido |
+|----------|-------------|-----------||
+| `SECRET_KEY` | Clave secreta para JWT | ✅ |
+| `OPENAI_API_KEY` | API key de OpenAI | ⚠️ |
+| `DEEPSEEK_API_KEY` | API key de DeepSeek | ⚠️ |
+| `GEMINI_API_KEY` | API key de Google Gemini | ⚠️ |
+| `AI_PROVIDER` | Proveedor de IA (openai/deepseek/gemini) | ✅ |
+| `DATABASE_URL` | URL de la base de datos | ❌ |
+| `DEBUG` | Modo debug (true/false) | ❌ |
+
+⚠️ **Nota**: Se requiere al menos una API key de IA
+
+### Credenciales por Defecto
+- **Email**: `admin@autopublicador.com`
+- **Password**: `admin123`
+
+⚠️ **Importante**: Cambia estas credenciales después del primer login
+
+## 📖 Uso
+
+### 1. Acceso al Dashboard
+- Ve a `/dashboard` en tu dominio
+- Inicia sesión con las credenciales por defecto
+- Cambia la contraseña inmediatamente
+
+### 2. Generar Contenido
+- Ve a "Generar Contenido" en el dashboard
+- Introduce un tema o palabras clave
+- Selecciona el estilo y configuraciones
+- Haz clic en "Generar"
+
+### 3. Crear Páginas de Aterrizaje
+- Ve a "Landing Pages" en el dashboard
+- Crea una nueva página
+- Personaliza el contenido y diseño
+- Publica y comparte
+
+### 4. Gestionar Contenido
+- Ve a "Gestión de Contenido"
+- Edita, elimina o programa publicaciones
+- Revisa estadísticas y rendimiento
+
+## 🔒 Seguridad
+
+- ✅ Autenticación JWT segura
+- ✅ Validación de datos con Pydantic
+- ✅ Rate limiting implementado
+- ✅ Sanitización de HTML
+- ✅ Variables de entorno para secretos
+- ✅ CORS configurado correctamente
+
+## 📊 Monitoreo
+
+### Logs en Vercel
+```bash
+# Ver logs en tiempo real
+vercel logs --follow
+
+# Ver logs de una función específica
+vercel logs --function=backend/main_vercel.py
+```
+
+### Health Checks
+- `/health` - Estado general de la aplicación
+- `/ping` - Verificación básica de conectividad
+- `/ready` - Verificación de dependencias
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+
+## 🆘 Soporte
+
+- 📧 **Email**: soporte@autopublicador.com
+- 📖 **Documentación**: [docs.autopublicador.com](https://docs.autopublicador.com)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/TU_USUARIO/autopublicador-web/issues)
+
+## 🎯 Roadmap
+
+- [ ] Integración con más proveedores de IA
+- [ ] Editor WYSIWYG avanzado
+- [ ] Programación automática de publicaciones
+- [ ] Integración con redes sociales
+- [ ] Analytics avanzados
+- [ ] Temas y plantillas personalizables
+- [ ] API pública para desarrolladores
+- [ ] Aplicación móvil
+
+---
+
+⭐ **¡Si te gusta este proyecto, dale una estrella en GitHub!** ⭐
 
 ### 🎯 Características Principales
 
