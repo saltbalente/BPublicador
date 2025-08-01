@@ -1,5 +1,4 @@
 {
-  "_comment": "Configuración optimizada para Vercel - Runtime corregido",
   "functions": {
     "backend/main_vercel.py": {
       "runtime": "@vercel/python",
